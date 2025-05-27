@@ -1,0 +1,6 @@
+{
+  "projectType": "nextjs",
+  "src": "./app",
+  "tsconfig": "./tsconfig.json",
+  "ignore": ["**/node_modules/**", "**/.next/**", "**/out/**"]
+}
