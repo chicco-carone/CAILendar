@@ -59,6 +59,7 @@ export function EventModal({
     setIsAllDay,
     handleStartDateChange,
     handleEndDateChange,
+    handleAllDayToggle,
     handleSubmit,
   } = useEventForm({
     mode,
@@ -113,7 +114,7 @@ export function EventModal({
             setAttendees={setAttendees}
           />
 
-          <AllDayToggle isAllDay={isAllDay} onToggle={setIsAllDay} />
+          <AllDayToggle isAllDay={isAllDay} onToggle={handleAllDayToggle} />
 
           <motion.div 
             layout 

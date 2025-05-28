@@ -119,6 +119,12 @@ export function useEventForm({
         setAttendees(event.attendees.join(", "));
       }
 
+      // Set all-day status
+      if (event.isAllDay !== undefined) {
+        logger.debug("Setting isAllDay:", event.isAllDay);
+        setIsAllDay(event.isAllDay);
+      }
+
       logger.debug("Edit mode state initialization completed");
     } else if (mode === "create") {
       logger.debug("Initializing create mode state");
@@ -192,6 +198,42 @@ export function useEventForm({
     }
   };
 
+  // All-day toggle handler
+  const handleAllDayToggle = (newIsAllDay: boolean) => {
+    logger.debug("All-day toggle changing", {
+      oldValue: isAllDay,
+      newValue: newIsAllDay,
+    });
+
+    setIsAllDay(newIsAllDay);
+
+    if (newIsAllDay) {
+      // Convert to all-day event: set start to 00:00 and end to 23:59
+      const allDayStart = setTimeOnDate(startDate, 0, 0);
+      const allDayEnd = setTimeOnDate(startDate, 23, 59);
+      
+      logger.debug("Converting to all-day event", {
+        newStartDate: allDayStart.toISOString(),
+        newEndDate: allDayEnd.toISOString(),
+      });
+      
+      setStartDate(allDayStart);
+      setEndDate(allDayEnd);
+    } else {
+      // Convert from all-day to timed event: set reasonable default times
+      const timedStart = setTimeOnDate(startDate, 9, 0); // 9:00 AM
+      const timedEnd = setTimeOnDate(startDate, 10, 0);   // 10:00 AM (1 hour duration)
+      
+      logger.debug("Converting to timed event", {
+        newStartDate: timedStart.toISOString(),
+        newEndDate: timedEnd.toISOString(),
+      });
+      
+      setStartDate(timedStart);
+      setEndDate(timedEnd);
+    }
+  };
+
   // Form submission handler
   const handleSubmit = (e: React.FormEvent) => {
     const submitStart = performance.now();
@@ -254,6 +296,7 @@ export function useEventForm({
         .map((a) => a.trim())
         .filter((a) => a),
       organizer: mode === "edit" && event?.organizer ? event.organizer : "You",
+      isAllDay,
     };
 
     logger.info("Event data prepared for submission", {
@@ -332,6 +375,7 @@ export function useEventForm({
     // Enhanced date handlers
     handleStartDateChange,
     handleEndDateChange,
+    handleAllDayToggle,
 
     // Form submission
     handleSubmit,

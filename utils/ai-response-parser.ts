@@ -273,12 +273,19 @@ export class AIResponseParser {
     }
 
     const now = new Date();
-    const startDate = partial.start
+    let startDate = partial.start
       ? this.parseFlexibleDate(partial.start)
       : now;
-    const endDate = partial.end
+    let endDate = partial.end
       ? this.parseFlexibleDate(partial.end)
       : addHours(startDate, this.options.defaultDuration);
+
+    // Handle all-day events
+    const isAllDay = partial.isAllDay || false;
+    if (isAllDay) {
+      startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0);
+      endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 23, 59, 59);
+    }
 
     return {
       id: uuidv4(),
@@ -291,6 +298,7 @@ export class AIResponseParser {
       location: partial.location || "",
       attendees: [],
       organizer: "",
+      isAllDay,
     };
   }
 
@@ -350,8 +358,15 @@ export class AIResponseParser {
    */
   private convertRawEvents(rawEvents: RawEventFromAI[]): CalendarEvent[] {
     return rawEvents.map((raw) => {
-      const startDate = this.parseEventDate(raw.start || "");
-      const endDate = this.parseEventDate(raw.end || "");
+      let startDate = this.parseEventDate(raw.start || "");
+      let endDate = this.parseEventDate(raw.end || "");
+
+      // Handle all-day events
+      const isAllDay = raw.isAllDay || false;
+      if (isAllDay) {
+        startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0);
+        endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 23, 59, 59);
+      }
 
       return {
         id: uuidv4(),
@@ -367,6 +382,7 @@ export class AIResponseParser {
         location: raw.location || "",
         attendees: [],
         organizer: "",
+        isAllDay,
       };
     });
   }

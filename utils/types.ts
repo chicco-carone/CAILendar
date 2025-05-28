@@ -9,6 +9,7 @@ export interface CalendarEvent {
   location?: string;
   attendees?: string[];
   organizer?: string;
+  isAllDay?: boolean;
 }
 
 export interface TimezoneAwareDate {
@@ -165,6 +166,7 @@ export interface RawEventFromAI {
   timezone?: string;
   location?: string | null;
   description?: string;
+  isAllDay?: boolean;
   [key: string]: unknown;
 }
 
@@ -179,6 +181,7 @@ export interface SerializedCalendarEvent {
   location?: string;
   attendees?: string[];
   organizer?: string;
+  isAllDay?: boolean;
 }
 
 export interface AIModel {

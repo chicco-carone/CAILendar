@@ -45,6 +45,7 @@ function serializeCalendarEvents(
     ...event,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate.toISOString(),
+    isAllDay: event.isAllDay || false,
   }));
 }
 
@@ -228,7 +229,8 @@ export async function POST(req: Request) {
             endDate: event.endDate.toISOString(),
             location: event.location,
             timezone: event.timezone,
-            description: event.description
+            description: event.description,
+            isAllDay: event.isAllDay
           }
         );
       });

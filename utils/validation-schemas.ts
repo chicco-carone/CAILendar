@@ -122,6 +122,7 @@ export const AIEventValidationSchema = z
       .union([z.string(), z.null()])
       .optional()
       .transform((val) => val || ""),
+    isAllDay: z.boolean().optional().default(false),
   })
   .refine((data) => {
     try {

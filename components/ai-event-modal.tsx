@@ -51,7 +51,6 @@ export function AIEventModal({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const cameraRef = useRef<any>(null);
 
-  // Use the enhanced AI hook
   const {
     loading,
     error,
@@ -125,17 +124,18 @@ export function AIEventModal({
   const capturePhoto = () => {
     if (cameraRef.current) {
       const imageSrc = cameraRef.current.takePhoto();
-      
-      // Convert base64 to file
+
       fetch(imageSrc)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+        .then((res) => res.blob())
+        .then((blob) => {
+          const file = new File([blob], "camera-capture.jpg", {
+            type: "image/jpeg",
+          });
           setFile(file);
           setImage(imageSrc);
           stopCamera();
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error processing photo:", error);
           alert("Error processing photo. Please try again.");
         });
@@ -152,7 +152,6 @@ export function AIEventModal({
     }
 
     console.log("[AI Modal] Clearing previous state...");
-    // Clear previous warnings and conflicts
     clearWarningsAndConflicts();
     clearError();
 
@@ -170,12 +169,11 @@ export function AIEventModal({
         });
 
         console.log("[AI Modal] About to call processWithAIEnhanced...");
-        // Use the enhanced AI processing
         events = await processWithAIEnhanced(
           prompt || undefined,
           image || undefined,
           "it",
-          true, // Include calendar context for conflict detection
+          true
         );
 
         console.log("[AI Modal] processWithAIEnhanced completed!");
@@ -206,7 +204,6 @@ export function AIEventModal({
         ];
       }
 
-      // Events are already properly formatted from the enhanced API
       if (events.length > 0) {
         setGeneratedEvents(events);
         setCurrentEventIndex(0);
@@ -214,8 +211,6 @@ export function AIEventModal({
       }
     } catch (e) {
       console.error("Error during enhanced AI processing:", e);
-      // Error handling is now managed by the hook
-      // Create a fallback event for display
       setGeneratedEvents([
         {
           id: uuidv4(),
@@ -254,7 +249,7 @@ export function AIEventModal({
 
   const handleDeleteEvent = () => {
     const newEvents = generatedEvents.filter(
-      (_, idx) => idx !== currentEventIndex,
+      (_, idx) => idx !== currentEventIndex
     );
     if (newEvents.length === 0) {
       setShowEventModal(false);
@@ -437,7 +432,7 @@ export function AIEventModal({
                               "absolute top-2 right-2 bg-black/30 hover:bg-black/50",
                               listening && "bg-purple-600 animate-pulse",
                               !browserSupportsSpeechRecognition &&
-                                "bg-red-700/80 hover:bg-red-800/90",
+                                "bg-red-700/80 hover:bg-red-800/90"
                             )}
                             onClick={handleMicClick}
                             aria-label={
@@ -449,7 +444,7 @@ export function AIEventModal({
                               className={cn(
                                 "h-5 w-5",
                                 !browserSupportsSpeechRecognition &&
-                                  "text-red-400 animate-pulse",
+                                  "text-red-400 animate-pulse"
                               )}
                             />
                           </Button>
@@ -570,10 +565,13 @@ export function AIEventModal({
                             aspectRatio={16 / 9}
                             facingMode="environment"
                             errorMessages={{
-                              noCameraAccessible: 'No camera device accessible. Please connect your camera or try a different browser.',
-                              permissionDenied: 'Permission denied. Please refresh and give camera permission.',
-                              switchCamera: 'It is not possible to switch camera to different one because there is only one video device accessible.',
-                              canvas: 'Canvas is not supported.'
+                              noCameraAccessible:
+                                "No camera device accessible. Please connect your camera or try a different browser.",
+                              permissionDenied:
+                                "Permission denied. Please refresh and give camera permission.",
+                              switchCamera:
+                                "It is not possible to switch camera to different one because there is only one video device accessible.",
+                              canvas: "Canvas is not supported.",
                             }}
                           />
                         </div>
@@ -644,7 +642,7 @@ export function AIEventModal({
             onPrev={() => setCurrentEventIndex((i) => Math.max(0, i - 1))}
             onNext={() =>
               setCurrentEventIndex((i) =>
-                Math.min(generatedEvents.length - 1, i + 1),
+                Math.min(generatedEvents.length - 1, i + 1)
               )
             }
             canPrev={currentEventIndex > 0}
@@ -681,7 +679,7 @@ export function AIEventModal({
               <Button
                 onClick={() =>
                   setCurrentEventIndex((i) =>
-                    Math.min(generatedEvents.length - 1, i + 1),
+                    Math.min(generatedEvents.length - 1, i + 1)
                   )
                 }
                 disabled={currentEventIndex === generatedEvents.length - 1}
