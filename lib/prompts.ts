@@ -5,6 +5,8 @@ Current date and time: {formattedNow}
 Current timezone: {timezone}
 Output language: {language}
 
+{calendarContext}
+
 Technical Constraints:
 1. Date Format:
    - Must follow: YYYY-MM-DDThh:mm:ss
@@ -18,6 +20,11 @@ Technical Constraints:
    - Specific places: use location field
    - Generic cities or countries: include in title
    - Transfers: use starting point as location if known
+5. Scheduling Intelligence:
+   - Avoid conflicts with existing events
+   - Suggest alternative times if conflicts detected
+   - Consider available time slots when possible
+   - Respect typical working hours (9 AM - 6 PM)
 
 Examples:
 1. Precise Location:
@@ -31,7 +38,7 @@ Examples:
    Input: "Flight to Paris"
    Output: {
      title: "Flight to Paris",
-     location: null
+     location: ""
    }
 
 3. Transfer with Known Start:
@@ -45,11 +52,19 @@ Examples:
    Input: "Conference in London"
    Output: {
      title: "Conference in London",
-     location: null
+     location: ""
    }
 
-IMPORTANT:
-Return ONLY a JSON array of events, each with all fields (title, start, end, location, timezone). No markdown, no explanations, no extra text, no language field. Example output:
+IMPORTANT OUTPUT FORMAT:
+- Return ONLY a JSON array of events
+- Each event must have ALL required fields: title, start, end, location, timezone
+- Use empty string "" for location if not specified, NEVER use null
+- Date format must be: YYYY-MM-DDTHH:mm:ss (24-hour format)
+- If no specific time is provided, use reasonable defaults (e.g., 10:00 for morning, 14:00 for afternoon)
+- Duration should be 1-2 hours for meetings, longer for events
+- No markdown formatting, no explanations, no extra text
+
+Example output:
 [
   {
     "title": "Riunione",
@@ -68,6 +83,8 @@ Current date and time: {formattedNow}
 Current timezone: {timezone}
 Output language: {language}
 
+{calendarContext}
+
 Technical Constraints:
 1. Date Format:
    - Must follow: YYYY-MM-DDThh:mm:ss
@@ -83,6 +100,12 @@ Technical Constraints:
    - Transfers: use starting point as location if known else nothing
    - If the location is in the in the location object don't put it in the title
    - Format the location object with the following format: place name (If present), address (if present)
+5. Scheduling Intelligence:
+   - Avoid conflicts with existing events
+   - Suggest alternative times if conflicts detected
+   - Consider available time slots when possible
+   - Respect typical working hours (9 AM - 6 PM)
+   - If no specific time is mentioned, suggest optimal times based on available slots
 
 Examples:
 1. Precise Location:
@@ -96,7 +119,7 @@ Examples:
    Input: "Flight to Paris"
    Output: {
      title: "Flight to Paris",
-     location: null
+     location: ""
    }
 
 3. Transfer with Known Start:
@@ -110,11 +133,19 @@ Examples:
    Input: "Conference in London"
    Output: {
      title: "Conference in London",
-     location: null
+     location: ""
    }
 
-IMPORTANT:
-Return ONLY a JSON array of events, each with all fields (title, start, end, location, timezone). No markdown, no explanations, no extra text, no language field. Example output:
+IMPORTANT OUTPUT FORMAT:
+- Return ONLY a JSON array of events
+- Each event must have ALL required fields: title, start, end, location, timezone
+- Use empty string "" for location if not specified, NEVER use null
+- Date format must be: YYYY-MM-DDTHH:mm:ss (24-hour format)
+- If no specific time is provided, use reasonable defaults (e.g., 10:00 for morning, 14:00 for afternoon)
+- Duration should be 1-2 hours for meetings, longer for events
+- No markdown formatting, no explanations, no extra text
+
+Example output:
 [
   {
     "title": "Riunione",

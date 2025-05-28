@@ -25,7 +25,7 @@ export interface CalendarViewProps {
   currentDate?: Date;
   onDateChange?: (
     date: Date,
-    view: "day" | "week" | "month" | "agenda"
+    view: "day" | "week" | "month" | "agenda",
   ) => void;
   initialView?: "day" | "week" | "month" | "agenda";
 }
@@ -39,7 +39,7 @@ export interface DayViewProps {
   handleEventClick: (event: CalendarEvent) => void;
   calculateEventStyle: (
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ) => { top: string; height: string };
   formatTime: (time: string) => string;
   formatHour: (hour: number) => string;
@@ -54,7 +54,7 @@ export interface WeekViewProps {
   handleEventClick: (event: CalendarEvent) => void;
   calculateEventStyle: (
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ) => { top: string; height: string };
   formatTime: (time: string) => string;
   formatHour: (hour: number) => string;
@@ -189,4 +189,42 @@ export interface APIError {
   message: string;
   status?: number;
   code?: string;
+}
+
+// Enhanced AI Response Types
+export interface AIConflictInfo {
+  eventTitle: string;
+  conflictCount: number;
+  severity: "low" | "medium" | "high";
+  suggestion: string;
+}
+
+export interface AICalendarContext {
+  existingEvents: number;
+  contextIncluded: boolean;
+}
+
+export interface AIResponseMetadata {
+  requestId: string;
+  parsingMethod: "json" | "structured" | "fallback";
+  warnings: string[];
+  conflicts: AIConflictInfo[];
+  calendarContext: AICalendarContext;
+  processingTime: number;
+}
+
+export interface EnhancedAIResponse {
+  events: SerializedCalendarEvent[];
+  metadata: AIResponseMetadata;
+}
+
+// Enhanced Error Response
+export interface AIErrorResponse {
+  error: {
+    code: string;
+    message: string;
+    retryable: boolean;
+    requestId?: string;
+    details?: any;
+  };
 }

@@ -25,6 +25,8 @@ import {
   validateDate,
 } from "@/utils/date-utils";
 import { Logger } from "@/utils/logger";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTimeFormat } from "@/hooks/use-time-format";
 
 const logger = new Logger("DateTimeSelector", true);
 
@@ -47,10 +49,13 @@ export function DateTimeSelector({
   minDate,
   className = "",
 }: DateTimeSelectorProps) {
+  const { timeFormat, formatTime } = useTimeFormat();
+  
   logger.debug("DateTimeSelector render", {
     label,
     date: date?.toISOString(),
     isAllDay,
+    timeFormat,
   });
 
   const handleDateChange = (newDate: Date | undefined) => {
@@ -73,22 +78,70 @@ export function DateTimeSelector({
   };
 
   const handleTimeChange = (timeValue: string) => {
-    const [hours, minutes] = timeValue.split(":").map(Number);
-
-    if (!validateDate(date, `${label} time change`)) {
-      logger.warn("Invalid date for time change", { label, date });
-      return;
-    }
-
-    const updatedDate = setTimeOnDate(date, hours, minutes);
-
-    logger.debug("Time changed", {
+    logger.info("🔍 handleTimeChange CALLED", {
       label,
       timeValue,
-      updatedDate: updatedDate?.toISOString(),
+      timeFormat,
+      date: date?.toISOString(),
+      stack: new Error().stack?.split('\n').slice(0, 5)
     });
+    
+    try {
+      if (!validateDate(date, `${label} time change`)) {
+        logger.warn("Invalid date for time change", { label, date });
+        return;
+      }
 
-    onDateChange(updatedDate);
+      // Find the corresponding time slot and extract the 24h time
+      let time24h: string;
+      
+      if (timeFormat === "12h" && timeValue.includes(" ")) {
+        logger.debug("Converting 12h to 24h format", { timeValue });
+        // Convert from 12h to 24h format
+        const [timepart, period] = timeValue.split(" ");
+        const [hourStr, minuteStr] = timepart.split(":");
+        let hour = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+        
+        logger.debug("Parsed 12h components", { hourStr, minuteStr, hour, minutes, period });
+        
+        if (period === "PM" && hour !== 12) {
+          hour += 12;
+        } else if (period === "AM" && hour === 12) {
+          hour = 0;
+        }
+        
+        time24h = `${hour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+        logger.debug("Converted to 24h", { time24h });
+      } else {
+        logger.debug("Using 24h format directly", { timeValue });
+        // Already in 24h format
+        time24h = timeValue;
+      }
+
+      // Extract hours and minutes from the 24h time string
+      const [hourStr, minuteStr] = time24h.split(":");
+      const hours = parseInt(hourStr, 10);
+      const minutes = parseInt(minuteStr, 10);
+      
+      logger.debug("Final parsed values", { hourStr, minuteStr, hours, minutes });
+
+      // Create new date with the selected time
+      const updatedDate = setTimeOnDate(date, hours, minutes);
+
+      logger.info("✅ Time change SUCCESS", {
+        label,
+        timeValue,
+        time24h,
+        hours,
+        minutes,
+        updatedDate: updatedDate?.toISOString(),
+      });
+
+      onDateChange(updatedDate);
+    } catch (error) {
+      logger.error("❌ CRITICAL Error in handleTimeChange", { error, timeValue, stack: error instanceof Error ? error.stack : 'Unknown error' });
+    }
   };
 
   // Generate time slots (every 15 minutes)
@@ -96,14 +149,77 @@ export function DateTimeSelector({
     const totalMinutes = i * 15;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    const time24h = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    
+    if (timeFormat === "12h") {
+      return formatTime(time24h);
+    }
+    return time24h;
   });
+  
+  // Get current time value from the Date object
+  const getCurrentTimeValue = () => {
+    if (!date || isNaN(date.getTime())) {
+      logger.warn("Invalid date in getCurrentTimeValue", { date });
+      return timeFormat === "12h" ? "8:00 AM" : "08:00";
+    }
+    
+    try {
+      // Extract hours and minutes directly from the Date object
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      
+      // Round to nearest 15-minute interval
+      const totalMinutes = hours * 60 + minutes;
+      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+      const roundedHours = Math.floor(roundedMinutes / 60) % 24;
+      const roundedMins = roundedMinutes % 60;
+      
+      // Create the time string in 24h format
+      const time24h = `${roundedHours.toString().padStart(2, "0")}:${roundedMins.toString().padStart(2, "0")}`;
+      
+      // Convert to desired format
+      const timeValue = timeFormat === "12h" ? formatTime(time24h) : time24h;
+      
+      logger.debug("getCurrentTimeValue result", {
+        date: date.toISOString(),
+        originalHours: hours,
+        originalMinutes: minutes,
+        roundedTime: time24h,
+        timeValue,
+        timeFormat
+      });
+      
+      return timeValue;
+    } catch (error) {
+      logger.error("Error in getCurrentTimeValue", { error, date });
+      return timeFormat === "12h" ? "8:00 AM" : "08:00";
+    }
+  };
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       {icon}
-      <div className="flex w-full gap-2">
-        <div className={isAllDay ? "w-full" : "w-[70%]"}>
+      <motion.div 
+        className="flex w-full gap-2"
+        layout
+        transition={{ 
+          type: "spring", 
+          stiffness: 400, 
+          damping: 35,
+          duration: 0.4
+        }}
+      >
+        <motion.div 
+          className={isAllDay ? "w-full" : "w-[70%]"}
+          layout
+          transition={{ 
+            type: "spring", 
+            stiffness: 400, 
+            damping: 35,
+            duration: 0.4
+          }}
+        >
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -131,13 +247,29 @@ export function DateTimeSelector({
               />
             </PopoverContent>
           </Popover>
-        </div>
-        {!isAllDay && (
-          <div className="w-[30%]">
+        </motion.div>
+        <motion.div 
+          className="w-[30%]"
+          layout
+          animate={{
+            opacity: isAllDay ? 0 : 1,
+            scale: isAllDay ? 0.8 : 1,
+            width: isAllDay ? 0 : "30%"
+          }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 400, 
+            damping: 35,
+            duration: 0.4
+          }}
+          style={{ 
+            overflow: "hidden",
+            transformOrigin: "right center"
+          }}
+        >
+          {!isAllDay && (
             <Select
-              value={
-                date && !isNaN(date.getTime()) ? format(date, "HH:mm") : "08:00"
-              }
+              value={getCurrentTimeValue()}
               onValueChange={handleTimeChange}
             >
               <SelectTrigger className="bg-white/10 border border-white/20 text-white w-full px-3 py-2 h-10">
@@ -151,9 +283,9 @@ export function DateTimeSelector({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
-      </div>
+          )}
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

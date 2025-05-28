@@ -1,5 +1,10 @@
 import axios, { AxiosInstance } from "axios";
-import { CalendarEvent } from "@/utils/types";
+import {
+  CalendarEvent,
+  EnhancedAIResponse,
+  AIErrorResponse,
+  AIResponseMetadata,
+} from "@/utils/types";
 
 let baseURL =
   process.env.NEXT_PUBLIC_API_BASE_URL || `http://localhost:3000/api`;
@@ -66,7 +71,89 @@ export const imageToCalendarEvents = async (
 };
 
 /**
- * Converts text and/or images into calendar events using AI
+ * Converts text and/or images into calendar events using AI (Enhanced Version)
+ * @param text Optional text containing event information
+ * @param image Optional image as base64 string or data URL
+ * @param language Preferred language (default: 'it')
+ * @param includeContext Whether to include calendar context for conflict detection (default: true)
+ * @returns Promise with enhanced AI response containing events and metadata
+ */
+export const aiToCalendarEventsEnhanced = async (
+  text?: string,
+  image?: string,
+  language: string = "it",
+  includeContext: boolean = true,
+): Promise<{
+  events: CalendarEvent[];
+  metadata: AIResponseMetadata;
+}> => {
+  try {
+    console.log("aiToCalendarEventsEnhanced called with:", {
+      hasText: !!text,
+      hasImage: !!image,
+      language,
+      includeContext,
+      textLength: text?.length,
+      imageSize: image?.length,
+    });
+
+    if (!text && !image) {
+      console.error("Validation error: No text or image provided");
+      throw new Error("Deve essere fornito almeno del testo o un'immagine");
+    }
+
+    console.log("Making enhanced API request to /calendar/ai");
+    const response = await API.post<EnhancedAIResponse>("/calendar/ai", {
+      text,
+      image,
+      language,
+      includeContext,
+    }, {
+      timeout: 30000, // 30 seconds timeout for AI requests
+    });
+
+    console.log("Enhanced API Response received:", {
+      status: response.status,
+      statusText: response.statusText,
+      eventsCount: response.data?.events?.length,
+      metadata: response.data?.metadata,
+    });
+
+    // Convert string dates to Date objects
+    const events = response.data.events.map((event) => ({
+      ...event,
+      startDate: new Date(event.startDate),
+      endDate: new Date(event.endDate),
+    }));
+
+    return {
+      events,
+      metadata: response.data.metadata,
+    };
+  } catch (error: any) {
+    console.error("Error in aiToCalendarEventsEnhanced:", {
+      error,
+      message: error?.message,
+      response: error?.response?.data,
+      status: error?.response?.status,
+    });
+
+    // Handle enhanced error responses
+    if (error?.response?.data?.error) {
+      const enhancedError = error.response.data as AIErrorResponse;
+      const customError = new Error(enhancedError.error.message);
+      (customError as any).code = enhancedError.error.code;
+      (customError as any).retryable = enhancedError.error.retryable;
+      (customError as any).requestId = enhancedError.error.requestId;
+      throw customError;
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Converts text and/or images into calendar events using AI (Legacy Version)
  * @param text Optional text containing event information
  * @param image Optional image as base64 string or data URL
  * @param language Preferred language (default: 'it')
@@ -78,45 +165,30 @@ export const aiToCalendarEvents = async (
   language: string = "it",
 ): Promise<CalendarEvent[]> => {
   try {
-    console.log("aiToCalendarEvents called with:", {
-      hasText: !!text,
-      hasImage: !!image,
-      language,
-      textLength: text?.length,
-      imageSize: image?.length,
-    });
-
-    if (!text && !image) {
-      console.error("Validation error: No text or image provided");
-      throw new Error("Deve essere fornito almeno del testo o un'immagine");
-    }
-
-    console.log("Making API request to /calendar/ai");
-    const response = await API.post<CalendarEvent[]>("/calendar/ai", {
+    // Use the enhanced version but return only events for backward compatibility
+    const result = await aiToCalendarEventsEnhanced(
       text,
       image,
       language,
-    });
+      true,
+    );
 
-    console.log("API Response received:", {
-      status: response.status,
-      statusText: response.statusText,
-      dataLength: response.data?.length,
-      data: response.data,
-    });
+    // Log warnings and conflicts for debugging
+    if (result.metadata.warnings.length > 0) {
+      console.warn("AI Processing Warnings:", result.metadata.warnings);
+    }
 
-    // Convert string dates to Date objects
-    return response.data.map((event) => ({
-      ...event,
-      startDate: new Date(event.startDate),
-      endDate: new Date(event.endDate),
-    }));
+    if (result.metadata.conflicts.length > 0) {
+      console.warn("Scheduling Conflicts Detected:", result.metadata.conflicts);
+    }
+
+    return result.events;
   } catch (error: any) {
     console.error("Error in aiToCalendarEvents:", {
       error,
       message: error?.message,
-      response: error?.response?.data,
-      status: error?.response?.status,
+      code: (error as any).code,
+      requestId: (error as any).requestId,
     });
     throw error;
   }

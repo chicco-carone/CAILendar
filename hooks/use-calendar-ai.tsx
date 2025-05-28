@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { CalendarEvent } from "@/lib/ical-utils";
+import { CalendarEvent } from "@/utils/types";
 import {
   textToCalendarEvents,
   imageToCalendarEvents,
+  aiToCalendarEventsEnhanced,
+  aiToCalendarEvents,
   exportEventToIcal,
   importEventsFromIcal,
 } from "@/utils/API";
+import type { AIConflictInfo, AIResponseMetadata } from "@/utils/types";
 
 /**
  * Hook personalizzato per la gestione degli eventi del calendario tramite AI
@@ -14,6 +17,11 @@ import {
 export const useCalendarAI = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [conflicts, setConflicts] = useState<AIConflictInfo[]>([]);
+  const [lastMetadata, setLastMetadata] = useState<AIResponseMetadata | null>(
+    null,
+  );
 
   /**
    * Converte il testo in eventi del calendario
@@ -68,6 +76,111 @@ export const useCalendarAI = () => {
   };
 
   /**
+   * Processa testo e/o immagini con AI (versione avanzata con metadata)
+   * @param text Testo opzionale contenente informazioni sugli eventi
+   * @param image Immagine opzionale come stringa base64 o data URL
+   * @param language Lingua preferita (default: 'it')
+   * @param includeContext Se includere il contesto del calendario per il rilevamento conflitti
+   */
+  const processWithAIEnhanced = async (
+    text?: string,
+    image?: string,
+    language: string = "it",
+    includeContext: boolean = true,
+  ): Promise<CalendarEvent[]> => {
+    setLoading(true);
+    setError(null);
+    setWarnings([]);
+    setConflicts([]);
+    setLastMetadata(null);
+
+    try {
+      const result = await aiToCalendarEventsEnhanced(
+        text,
+        image,
+        language,
+        includeContext,
+      );
+
+      // Update state with metadata
+      setWarnings(result.metadata.warnings);
+      setConflicts(result.metadata.conflicts);
+      setLastMetadata(result.metadata);
+
+      console.log(
+        `[Hook] [AI-${result.metadata.requestId}] Processing completed:`,
+        {
+          eventsGenerated: result.events.length,
+          parsingMethod: result.metadata.parsingMethod,
+          warningsCount: result.metadata.warnings.length,
+          conflictsCount: result.metadata.conflicts.length,
+          calendarContext: result.metadata.calendarContext,
+        },
+      );
+
+      console.log("[Hook] Full result object:", result);
+      console.log("[Hook] Events being returned:", result.events);
+      console.log("[Hook] First event being returned:", result.events[0]);
+
+      return result.events;
+    } catch (err: any) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Errore sconosciuto";
+      const requestId = err.requestId ? ` [${err.requestId}]` : "";
+      const errorCode = err.code ? ` (${err.code})` : "";
+
+      setError(
+        `Errore nell'elaborazione AI${requestId}${errorCode}: ${errorMessage}`,
+      );
+
+      console.error("Enhanced AI processing failed:", {
+        error: err,
+        code: err.code,
+        retryable: err.retryable,
+        requestId: err.requestId,
+      });
+
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Processa testo e/o immagini con AI (versione legacy)
+   * @param text Testo opzionale contenente informazioni sugli eventi
+   * @param image Immagine opzionale come stringa base64 o data URL
+   * @param language Lingua preferita (default: 'it')
+   */
+  const processWithAI = async (
+    text?: string,
+    image?: string,
+    language: string = "it",
+  ): Promise<CalendarEvent[]> => {
+    setLoading(true);
+    setError(null);
+    setWarnings([]);
+    setConflicts([]);
+
+    try {
+      const events = await aiToCalendarEvents(text, image, language);
+      return events;
+    } catch (err: any) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Errore sconosciuto";
+      const requestId = err.requestId ? ` [${err.requestId}]` : "";
+      const errorCode = err.code ? ` (${err.code})` : "";
+
+      setError(
+        `Errore nell'elaborazione AI${requestId}${errorCode}: ${errorMessage}`,
+      );
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Esporta un evento in formato iCal
    * @param event Evento da esportare
    */
@@ -109,12 +222,53 @@ export const useCalendarAI = () => {
     }
   };
 
+  /**
+   * Pulisce warnings e conflicts
+   */
+  const clearWarningsAndConflicts = () => {
+    setWarnings([]);
+    setConflicts([]);
+    setLastMetadata(null);
+  };
+
+  /**
+   * Pulisce tutti gli stati di errore
+   */
+  const clearError = () => {
+    setError(null);
+  };
+
+  /**
+   * Ottiene un riepilogo dello stato corrente
+   */
+  const getProcessingStatus = () => ({
+    loading,
+    hasWarnings: warnings.length > 0,
+    hasConflicts: conflicts.length > 0,
+    hasError: !!error,
+    lastRequestId: lastMetadata?.requestId,
+    parsingMethod: lastMetadata?.parsingMethod,
+  });
+
   return {
+    // Stati
     loading,
     error,
+    warnings,
+    conflicts,
+    lastMetadata,
+
+    // Funzioni principali
     processTextToEvents,
     processImagesToEvents,
+    processWithAI,
+    processWithAIEnhanced,
     exportToIcal,
     importFromIcal,
+
+    // Utility
+    clearWarningsAndConflicts,
+    clearError,
+    getProcessingStatus,
   };
 };
