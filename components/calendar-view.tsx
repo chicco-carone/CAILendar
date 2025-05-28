@@ -54,10 +54,10 @@ export function CalendarView({
   initialView = "week",
 }: CalendarViewProps) {
   const [view, setView] = useState<"day" | "week" | "month" | "agenda">(
-    (initialView as any) === "agenda" ? "agenda" : initialView
+    (initialView as any) === "agenda" ? "agenda" : initialView,
   );
   const [currentDate, setCurrentDate] = useState(
-    externalCurrentDate || new Date()
+    externalCurrentDate || new Date(),
   );
   const { timeFormat, setTimeFormat, formatTime, formatHour } = useTimeFormat();
 
@@ -129,9 +129,13 @@ export function CalendarView({
   }, []);
 
   const filteredEvents = useMemo(() => {
-    console.log("[CalendarView] Original events:", originalEvents.length, originalEvents);
+    console.log(
+      "[CalendarView] Original events:",
+      originalEvents.length,
+      originalEvents,
+    );
     console.log("[CalendarView] Search query:", searchQuery);
-    
+
     if (!searchQuery.trim()) {
       console.log("[CalendarView] No search query, returning all events");
       return originalEvents;
@@ -146,8 +150,8 @@ export function CalendarView({
         (event.location && event.location.toLowerCase().includes(query)) ||
         (event.attendees &&
           event.attendees.some((attendee) =>
-            attendee.toLowerCase().includes(query)
-          ))
+            attendee.toLowerCase().includes(query),
+          )),
     );
     console.log("[CalendarView] Filtered events:", filtered.length, filtered);
     return filtered;
@@ -160,7 +164,7 @@ export function CalendarView({
   const handleTimeSlotClick = (day: number, hour: number) => {
     const slotDate = new Date(currentDate);
     slotDate.setHours(hour, 0, 0, 0);
-    
+
     const endDate = new Date(slotDate);
     endDate.setHours(hour + 1, 0, 0, 0);
 
@@ -256,7 +260,7 @@ export function CalendarView({
 
   const calculateEventStyle = (
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): { top: string; height: string } => {
     const startHour = startDate.getHours();
     const startMinute = startDate.getMinutes();
@@ -365,10 +369,12 @@ export function CalendarView({
                 Agenda
               </button>
               <button
-                onClick={() => setTimeFormat(timeFormat === '12h' ? '24h' : '12h')}
+                onClick={() =>
+                  setTimeFormat(timeFormat === "12h" ? "24h" : "12h")
+                }
                 className="px-3 py-1 ml-2 rounded bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white text-xs transition-colors"
               >
-                {timeFormat === '12h' ? '24h' : '12h'}
+                {timeFormat === "12h" ? "24h" : "12h"}
               </button>
             </div>
           )}
@@ -455,7 +461,9 @@ export function CalendarView({
           setIsModalOpen(false);
           setEditingEvent(null);
         }}
-        onSaveAction={(eventData: Partial<CalendarEvent>) => handleSaveEvent(eventData)}
+        onSaveAction={(eventData: Partial<CalendarEvent>) =>
+          handleSaveEvent(eventData)
+        }
         event={editingEvent || undefined}
         mode={editingEvent && editingEvent.id ? "edit" : "create"}
       />

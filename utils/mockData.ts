@@ -11,14 +11,29 @@ console.log("[MockData] Today locale:", today.toLocaleDateString());
 const forcedToday = new Date(2025, 4, 27);
 console.log("[MockData] Forced today:", forcedToday.toISOString());
 
-console.log("[MockData] Creating events for current date:", forcedToday.toISOString());
+console.log(
+  "[MockData] Creating events for current date:",
+  forcedToday.toISOString()
+);
 
 const sampleEvents: CalendarEvent[] = [
   {
     id: 1,
     title: "Morning Standup",
-    startDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate(), 9, 0),
-    endDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate(), 9, 30),
+    startDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate(),
+      9,
+      0
+    ),
+    endDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate(),
+      9,
+      30
+    ),
     timezone: "Europe/Rome",
     color: "bg-blue-500",
     description: "Daily team sync",
@@ -29,8 +44,20 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: 2,
     title: "Project Review",
-    startDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 1, 14, 0),
-    endDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 1, 15, 30),
+    startDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 1,
+      14,
+      0
+    ),
+    endDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 1,
+      15,
+      30
+    ),
     timezone: "Europe/Rome",
     color: "bg-green-500",
     description: "Quarterly project review",
@@ -41,8 +68,20 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: 3,
     title: "Client Meeting",
-    startDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 2, 10, 0),
-    endDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 2, 11, 0),
+    startDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 2,
+      10,
+      0
+    ),
+    endDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 2,
+      11,
+      0
+    ),
     timezone: "Europe/Rome",
     color: "bg-purple-500",
     description: "New client onboarding",
@@ -53,8 +92,20 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: 4,
     title: "Team Building",
-    startDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 3, 15, 0),
-    endDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 3, 17, 0),
+    startDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 3,
+      15,
+      0
+    ),
+    endDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 3,
+      17,
+      0
+    ),
     timezone: "Europe/Rome",
     color: "bg-yellow-500",
     description: "Team building activities",
@@ -65,8 +116,20 @@ const sampleEvents: CalendarEvent[] = [
   {
     id: 5,
     title: "Product Launch",
-    startDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 4, 9, 0),
-    endDate: new Date(forcedToday.getFullYear(), forcedToday.getMonth(), forcedToday.getDate() + 4, 12, 0),
+    startDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 4,
+      9,
+      0
+    ),
+    endDate: new Date(
+      forcedToday.getFullYear(),
+      forcedToday.getMonth(),
+      forcedToday.getDate() + 4,
+      12,
+      0
+    ),
     timezone: "Europe/Rome",
     color: "bg-red-500",
     description: "New product launch event",
@@ -76,11 +139,14 @@ const sampleEvents: CalendarEvent[] = [
   },
 ];
 
-console.log("Sample events:", sampleEvents.map(event => ({
-  ...event,
-  startDate: event.startDate.toISOString(),
-  endDate: event.endDate.toISOString()
-})));
+console.log(
+  "Sample events:",
+  sampleEvents.map((event) => ({
+    ...event,
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate.toISOString(),
+  }))
+);
 
 const myCalendars = [
   { name: "My Calendar", color: "bg-blue-500" },

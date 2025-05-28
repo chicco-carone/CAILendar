@@ -1,8 +1,15 @@
-import { startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
+import {
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+} from "date-fns";
 import type { MonthViewProps } from "@/utils/types";
-import { formatInTimezone, isSameDayInTimezone, fromUTC } from "@/utils/date-utils";
-
-
+import {
+  formatInTimezone,
+  isSameDayInTimezone,
+  fromUTC,
+} from "@/utils/date-utils";
 
 export function CalendarMonthView({
   currentDate,
@@ -19,7 +26,10 @@ export function CalendarMonthView({
   const startDay = monthStart.getDay();
 
   const emptyCells = Array.from({ length: startDay }, (_, i) => (
-    <div key={`empty-${i}`} className="h-24 border border-gray-200 dark:border-white/20 transition-colors"></div>
+    <div
+      key={`empty-${i}`}
+      className="h-24 border border-gray-200 dark:border-white/20 transition-colors"
+    ></div>
   ));
 
   return (
@@ -57,7 +67,7 @@ export function CalendarMonthView({
               <div
                 className={`p-1 text-right cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 transition-colors ${
                   formatInTimezone(day, userTimezone, "d") ===
-                  formatInTimezone(new Date(), userTimezone, "d") &&
+                    formatInTimezone(new Date(), userTimezone, "d") &&
                   isSameMonth(day, new Date())
                     ? "bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto"
                     : ""
@@ -89,14 +99,19 @@ export function CalendarMonthView({
                           event.attendees.some((attendee) =>
                             attendee
                               .toLowerCase()
-                              .includes(searchQuery.toLowerCase())
+                              .includes(searchQuery.toLowerCase()),
                           )))
                         ? "ring-2 ring-white"
                         : ""
                     }`}
                     onClick={() => handleEventClick(event)}
                   >
-                    {formatInTimezone(fromUTC(event.startDate, event.timezone), event.timezone, "HH:mm")} {event.title}
+                    {formatInTimezone(
+                      fromUTC(event.startDate, event.timezone),
+                      event.timezone,
+                      "HH:mm",
+                    )}{" "}
+                    {event.title}
                   </div>
                 ))}
               </div>

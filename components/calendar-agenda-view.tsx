@@ -1,8 +1,6 @@
 import type { AgendaViewProps } from "@/utils/types";
 import { formatInTimezone, fromUTC } from "@/utils/date-utils";
 
-
-
 export function CalendarAgendaView({
   currentDate,
   filteredEvents,
@@ -27,12 +25,16 @@ export function CalendarAgendaView({
               searchQuery &&
               (event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (event.description &&
-                  event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  event.description
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())) ||
                 (event.location &&
-                  event.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  event.location
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())) ||
                 (event.attendees &&
                   event.attendees.some((attendee) =>
-                    attendee.toLowerCase().includes(searchQuery.toLowerCase())
+                    attendee.toLowerCase().includes(searchQuery.toLowerCase()),
                   )))
                 ? "ring-2 ring-white"
                 : ""
@@ -41,9 +43,15 @@ export function CalendarAgendaView({
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white">{event.title}</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  {event.title}
+                </h3>
                 <div className="mt-1 text-sm text-white/90">
-                  {formatInTimezone(fromUTC(event.startDate, event.timezone), event.timezone, "EEEE, MMMM d, yyyy")}
+                  {formatInTimezone(
+                    fromUTC(event.startDate, event.timezone),
+                    event.timezone,
+                    "EEEE, MMMM d, yyyy",
+                  )}
                 </div>
                 <div className="mt-1 text-sm text-white/90">
                   {`${formatInTimezone(fromUTC(event.startDate, event.timezone), event.timezone, "HH:mm")} - ${formatInTimezone(fromUTC(event.endDate, event.timezone), event.timezone, "HH:mm")}`}

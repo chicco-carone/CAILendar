@@ -25,7 +25,7 @@ export interface CalendarViewProps {
   currentDate?: Date;
   onDateChange?: (
     date: Date,
-    view: "day" | "week" | "month" | "agenda",
+    view: "day" | "week" | "month" | "agenda"
   ) => void;
   initialView?: "day" | "week" | "month" | "agenda";
 }
@@ -39,7 +39,7 @@ export interface DayViewProps {
   handleEventClick: (event: CalendarEvent) => void;
   calculateEventStyle: (
     startDate: Date,
-    endDate: Date,
+    endDate: Date
   ) => { top: string; height: string };
   formatTime: (time: string) => string;
   formatHour: (hour: number) => string;
@@ -54,7 +54,7 @@ export interface WeekViewProps {
   handleEventClick: (event: CalendarEvent) => void;
   calculateEventStyle: (
     startDate: Date,
-    endDate: Date,
+    endDate: Date
   ) => { top: string; height: string };
   formatTime: (time: string) => string;
   formatHour: (hour: number) => string;
@@ -146,7 +146,6 @@ export interface MiniCalendarProps {
   currentDate?: Date;
 }
 
-// Tipi per il contenuto multimodale dell'AI
 export interface TextContent {
   type: "text";
   text: string;
@@ -159,7 +158,6 @@ export interface ImageContent {
 
 export type MessageContent = TextContent | ImageContent;
 
-// Tipi per eventi raw dall'AI (prima della validazione)
 export interface RawEventFromAI {
   title?: string;
   start?: string;
@@ -170,12 +168,11 @@ export interface RawEventFromAI {
   [key: string]: unknown;
 }
 
-// Tipo per la risposta serializzata JSON
 export interface SerializedCalendarEvent {
   id: string | number;
   title: string;
-  startDate: string; // ISO string
-  endDate: string;   // ISO string
+  startDate: string;
+  endDate: string;
   timezone: string;
   color: string;
   description?: string;
@@ -184,12 +181,10 @@ export interface SerializedCalendarEvent {
   organizer?: string;
 }
 
-// Tipo per il modello AI
 export interface AIModel {
   [key: string]: unknown;
 }
 
-// Tipo per gestire errori tipizzati
 export interface APIError {
   message: string;
   status?: number;

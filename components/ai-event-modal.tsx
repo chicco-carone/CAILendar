@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EventModal } from "@/components/event-modal";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -259,19 +264,29 @@ export function AIEventModal({
                           className={cn(
                             "absolute top-2 right-2 bg-black/30 hover:bg-black/50",
                             listening && "bg-purple-600 animate-pulse",
-                            !browserSupportsSpeechRecognition && "bg-red-700/80 hover:bg-red-800/90"
+                            !browserSupportsSpeechRecognition &&
+                              "bg-red-700/80 hover:bg-red-800/90",
                           )}
                           onClick={handleMicClick}
-                          aria-label={listening ? "Stop recording" : "Start recording"}
+                          aria-label={
+                            listening ? "Stop recording" : "Start recording"
+                          }
                           disabled={!browserSupportsSpeechRecognition}
                         >
-                          <Mic className={cn("h-5 w-5", !browserSupportsSpeechRecognition && "text-red-400 animate-pulse")} />
+                          <Mic
+                            className={cn(
+                              "h-5 w-5",
+                              !browserSupportsSpeechRecognition &&
+                                "text-red-400 animate-pulse",
+                            )}
+                          />
                         </Button>
                       </span>
                     </TooltipTrigger>
                     {!browserSupportsSpeechRecognition && (
                       <TooltipContent side="top">
-                        Il riconoscimento vocale non è supportato sui browser non Chromium-based.
+                        Il riconoscimento vocale non è supportato sui browser
+                        non Chromium-based.
                       </TooltipContent>
                     )}
                   </Tooltip>

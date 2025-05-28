@@ -96,7 +96,7 @@ export function CalendarDayView({
               {dayEvents.map((event, i) => {
                 const eventStyle = calculateEventStyle(
                   fromUTC(event.startDate, event.timezone),
-                  fromUTC(event.endDate, event.timezone)
+                  fromUTC(event.endDate, event.timezone),
                 );
                 return (
                   <div
@@ -120,7 +120,7 @@ export function CalendarDayView({
                           event.attendees.some((attendee) =>
                             attendee
                               .toLowerCase()
-                              .includes(searchQuery.toLowerCase())
+                              .includes(searchQuery.toLowerCase()),
                           )))
                         ? "ring-2 ring-white"
                         : ""
@@ -138,14 +138,14 @@ export function CalendarDayView({
                         formatInTimezone(
                           fromUTC(event.startDate, event.timezone),
                           event.timezone,
-                          "HH:mm"
-                        )
+                          "HH:mm",
+                        ),
                       )} - ${formatTime(
                         formatInTimezone(
                           fromUTC(event.endDate, event.timezone),
                           event.timezone,
-                          "HH:mm"
-                        )
+                          "HH:mm",
+                        ),
                       )}`}
                     </div>
                   </div>

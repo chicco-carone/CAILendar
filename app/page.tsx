@@ -36,14 +36,15 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<"day" | "week" | "month" | "agenda">(
-    "week"
-  );
+  const [currentView, setCurrentView] = useState<
+    "day" | "week" | "month" | "agenda"
+  >("week");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isConnectionsOpen, setIsConnectionsOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isAIEventModalOpen, setIsAIEventModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Partial<CalendarEvent> | null>(null);
+  const [editingEvent, setEditingEvent] =
+    useState<Partial<CalendarEvent> | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const isMobile = useIsMobile();
@@ -57,13 +58,17 @@ export default function Home() {
 
   useEffect(() => {
     console.log("[Page] useEffect starting...");
-    console.log("[Page] Sample events available:", sampleEvents.length, sampleEvents);
+    console.log(
+      "[Page] Sample events available:",
+      sampleEvents.length,
+      sampleEvents,
+    );
     console.log("[Page] Current events state:", events.length, events);
-    
+
     // Clear localStorage to ensure we get fresh data
     console.log("[Page] Clearing localStorage");
     localStorage.removeItem("calendar-events");
-    
+
     // For debugging, let's always start with fresh sample events
     console.log("[Page] Using fresh sample events");
     setEvents(sampleEvents);
@@ -78,7 +83,6 @@ export default function Home() {
     console.log("[Page] Events state changed:", events.length, events);
   }, [events]);
 
-
   const handleEventAdd = (eventData: Partial<CalendarEvent>) => {
     const newEvent: CalendarEvent = {
       ...eventData,
@@ -86,7 +90,8 @@ export default function Home() {
       title: eventData.title ?? "",
       startDate: eventData.startDate ?? new Date(),
       endDate: eventData.endDate ?? new Date(),
-      timezone: eventData.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezone:
+        eventData.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       color: eventData.color ?? "bg-blue-500",
       description: eventData.description ?? "",
       location: eventData.location ?? "",
@@ -106,7 +111,7 @@ export default function Home() {
   const handleEventUpdate = (eventData: Partial<CalendarEvent>) => {
     if (!eventData.id) return;
     const updatedEvents = events.map((event) =>
-      event.id === eventData.id ? { ...event, ...eventData } : event
+      event.id === eventData.id ? { ...event, ...eventData } : event,
     );
     setEvents(updatedEvents);
     saveEventsToLocalStorage(updatedEvents);
@@ -142,14 +147,14 @@ export default function Home() {
     const newDate = new Date(
       date.getFullYear(),
       date.getMonth(),
-      currentDate.getDate()
+      currentDate.getDate(),
     );
     setCurrentDate(newDate);
   };
 
   const handleMainCalendarDateChange = (
     date: Date,
-    view: "day" | "week" | "month" | "agenda"
+    view: "day" | "week" | "month" | "agenda",
   ) => {
     setCurrentDate(date);
     if (view !== "agenda") {
@@ -398,10 +403,10 @@ export default function Home() {
         </div>
         {/* Pulsante azione fluttuante in basso a destra */}
         <div className="fixed bottom-8 right-8 z-50">
-        <AnimatedActionButton
-          onAddEventAction={handleAddEvent}
-          onAddEventWithAIAction={handleAddEventWithAI}
-        />
+          <AnimatedActionButton
+            onAddEventAction={handleAddEvent}
+            onAddEventWithAIAction={handleAddEventWithAI}
+          />
         </div>
       </main>
 

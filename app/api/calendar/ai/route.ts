@@ -38,7 +38,7 @@ function formatDate(date: Date) {
 }
 
 function serializeCalendarEvents(
-  events: CalendarEvent[]
+  events: CalendarEvent[],
 ): SerializedCalendarEvent[] {
   return events.map((event) => ({
     ...event,
@@ -73,7 +73,7 @@ export class CalendarAI {
     if (image) {
       const imagePrompt = CALENDAR_IMAGE_PROMPT.replace(
         "{formattedNow}",
-        formattedNow
+        formattedNow,
       )
         .replace("{timezone}", timezone)
         .replace("{language}", language);
@@ -109,7 +109,7 @@ export class CalendarAI {
     } else if (text) {
       const textPrompt = CALENDAR_TEXT_PROMPT.replace(
         "{formattedNow}",
-        formattedNow
+        formattedNow,
       )
         .replace("{timezone}", timezone)
         .replace("{language}", language);
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
       console.log("[API /calendar/ai] Parsed è un oggetto con chiave events");
     } else {
       console.log(
-        "[API /calendar/ai] Parsed non riconosciuto, fallback a array vuoto"
+        "[API /calendar/ai] Parsed non riconosciuto, fallback a array vuoto",
       );
     }
 
@@ -192,7 +192,7 @@ export async function POST(req: Request) {
       } catch (error) {
         console.warn(
           `Errore nel parsing della data di inizio: ${ev.start}`,
-          error
+          error,
         );
         startDate = new Date();
       }
