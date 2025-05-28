@@ -13,7 +13,7 @@ console.log("[MockData] Forced today:", forcedToday.toISOString());
 
 console.log(
   "[MockData] Creating events for current date:",
-  forcedToday.toISOString()
+  forcedToday.toISOString(),
 );
 
 const sampleEvents: CalendarEvent[] = [
@@ -25,14 +25,14 @@ const sampleEvents: CalendarEvent[] = [
       forcedToday.getMonth(),
       forcedToday.getDate(),
       9,
-      0
+      0,
     ),
     endDate: new Date(
       forcedToday.getFullYear(),
       forcedToday.getMonth(),
       forcedToday.getDate(),
       9,
-      30
+      30,
     ),
     timezone: "Europe/Rome",
     color: "bg-blue-500",
@@ -49,14 +49,14 @@ const sampleEvents: CalendarEvent[] = [
       forcedToday.getMonth(),
       forcedToday.getDate() + 1,
       14,
-      0
+      0,
     ),
     endDate: new Date(
       forcedToday.getFullYear(),
       forcedToday.getMonth(),
       forcedToday.getDate() + 1,
       15,
-      30
+      30,
     ),
     timezone: "Europe/Rome",
     color: "bg-green-500",
@@ -73,14 +73,14 @@ const sampleEvents: CalendarEvent[] = [
       forcedToday.getMonth(),
       forcedToday.getDate() + 2,
       10,
-      0
+      0,
     ),
     endDate: new Date(
       forcedToday.getFullYear(),
       forcedToday.getMonth(),
       forcedToday.getDate() + 2,
       11,
-      0
+      0,
     ),
     timezone: "Europe/Rome",
     color: "bg-purple-500",
@@ -97,14 +97,14 @@ const sampleEvents: CalendarEvent[] = [
       forcedToday.getMonth(),
       forcedToday.getDate() + 3,
       15,
-      0
+      0,
     ),
     endDate: new Date(
       forcedToday.getFullYear(),
       forcedToday.getMonth(),
       forcedToday.getDate() + 3,
       17,
-      0
+      0,
     ),
     timezone: "Europe/Rome",
     color: "bg-yellow-500",
@@ -121,14 +121,14 @@ const sampleEvents: CalendarEvent[] = [
       forcedToday.getMonth(),
       forcedToday.getDate() + 4,
       9,
-      0
+      0,
     ),
     endDate: new Date(
       forcedToday.getFullYear(),
       forcedToday.getMonth(),
       forcedToday.getDate() + 4,
       12,
-      0
+      0,
     ),
     timezone: "Europe/Rome",
     color: "bg-red-500",
@@ -145,7 +145,7 @@ console.log(
     ...event,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate.toISOString(),
-  }))
+  })),
 );
 
 const myCalendars = [

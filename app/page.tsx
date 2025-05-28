@@ -11,7 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { CalendarView } from "@/components/calendar-view";
+import CalendarView from "@/components/calendar-view";
 import { MiniCalendar } from "@/components/mini-calendar";
 import { SettingsModal } from "@/components/settings-modal";
 import { ConnectionsModal } from "@/components/connections-modal";
@@ -32,6 +32,16 @@ import { myCalendars, sampleEvents } from "@/utils/mockData";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+import { Logger } from "@/utils/logger";
+
+let logger: Logger | null = null;
+const getLogger = () => {
+  if (!logger) {
+    logger = new Logger("Page", true);
+  }
+  return logger;
+};
+
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,38 +59,34 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const isMobile = useIsMobile();
 
-  // Debug logs at render time
-  console.log("[Page] Rendering component - events count:", events.length);
-  console.log("[Page] Sample events count:", sampleEvents.length);
+  getLogger().debug("Rendering component - events count:", events.length);
+  getLogger().debug("Sample events count:", sampleEvents.length);
   if (events.length > 0) {
-    console.log("[Page] First event:", events[0]);
+    getLogger().debug("First event:", events[0]);
   }
 
   useEffect(() => {
-    console.log("[Page] useEffect starting...");
-    console.log(
-      "[Page] Sample events available:",
+    getLogger().info("useEffect starting...");
+    getLogger().debug(
+      "Sample events available:",
       sampleEvents.length,
       sampleEvents,
     );
-    console.log("[Page] Current events state:", events.length, events);
+    getLogger().debug("Current events state:", events.length, events);
 
-    // Clear localStorage to ensure we get fresh data
-    console.log("[Page] Clearing localStorage");
+    getLogger().info("Clearing localStorage");
     localStorage.removeItem("calendar-events");
 
-    // For debugging, let's always start with fresh sample events
-    console.log("[Page] Using fresh sample events");
+    getLogger().info("Using fresh sample events");
     setEvents(sampleEvents);
     saveEventsToLocalStorage(sampleEvents);
 
     setIsLoaded(true);
-    console.log("[Page] useEffect completed");
+    getLogger().info("useEffect completed");
   }, []);
 
-  // Track events state changes
   useEffect(() => {
-    console.log("[Page] Events state changed:", events.length, events);
+    getLogger().debug("Events state changed:", events.length, events);
   }, [events]);
 
   const handleEventAdd = (eventData: Partial<CalendarEvent>) => {
