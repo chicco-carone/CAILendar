@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Info,
   Clock,
+  Camera,
 } from "lucide-react";
 import { FiChevronRight } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import { useCalendarAI } from "@/hooks/use-calendar-ai";
 import { v4 as uuidv4 } from "uuid";
+import { Camera as CameraPro } from "react-camera-pro";
 import type { AIEventModalProps, AIConflictInfo } from "@/utils/types";
 
 export function AIEventModal({
@@ -46,6 +48,8 @@ export function AIEventModal({
   const [showEventModal, setShowEventModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showWarnings, setShowWarnings] = useState(true);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const cameraRef = useRef<any>(null);
 
   // Use the enhanced AI hook
   const {
@@ -107,6 +111,34 @@ export function AIEventModal({
     setImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const startCamera = () => {
+    setIsCameraOpen(true);
+  };
+
+  const stopCamera = () => {
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (cameraRef.current) {
+      const imageSrc = cameraRef.current.takePhoto();
+      
+      // Convert base64 to file
+      fetch(imageSrc)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+          setFile(file);
+          setImage(imageSrc);
+          stopCamera();
+        })
+        .catch(error => {
+          console.error("Error processing photo:", error);
+          alert("Error processing photo. Please try again.");
+        });
     }
   };
 
@@ -435,9 +467,32 @@ export function AIEventModal({
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-white/70">
-                  Upload an image or document (optional)
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white/70">
+                    Upload an image or document (optional)
+                  </p>
+                  <div className="flex gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={startCamera}
+                            className="border-white/20 text-white hover:bg-white/10"
+                            disabled={isCameraOpen}
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Camera
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Take a photo with your camera
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
 
                 {file ? (
                   <div className="relative rounded-lg overflow-hidden bg-black/30 p-4 flex items-center gap-3">
@@ -490,6 +545,58 @@ export function AIEventModal({
                   accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text"
                   onChange={handleFileUpload}
                 />
+
+                {isCameraOpen && (
+                  <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+                    <div className="bg-white/10 dark:bg-black/30 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+                      <div className="flex items-center justify-between p-4 border-b border-white/20">
+                        <h3 className="text-lg font-semibold text-white flex items-center">
+                          <Camera className="h-5 w-5 mr-2" />
+                          Take a Photo
+                        </h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={stopCamera}
+                          className="text-white hover:bg-white/10"
+                        >
+                          <X className="h-5 w-5" />
+                        </Button>
+                      </div>
+                      <div className="p-4">
+                        <div className="relative bg-black rounded-lg overflow-hidden h-64">
+                          <CameraPro
+                            ref={cameraRef}
+                            aspectRatio={16 / 9}
+                            facingMode="environment"
+                            errorMessages={{
+                              noCameraAccessible: 'No camera device accessible. Please connect your camera or try a different browser.',
+                              permissionDenied: 'Permission denied. Please refresh and give camera permission.',
+                              switchCamera: 'It is not possible to switch camera to different one because there is only one video device accessible.',
+                              canvas: 'Canvas is not supported.'
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-center gap-4 mt-4">
+                          <Button
+                            variant="outline"
+                            onClick={stopCamera}
+                            className="border-white/20 text-white hover:bg-white/10"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={capturePhoto}
+                            className="bg-purple-500 hover:bg-purple-600 text-white"
+                          >
+                            <Camera className="h-4 w-4 mr-2" />
+                            Capture
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
