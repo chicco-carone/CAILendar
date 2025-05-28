@@ -12,6 +12,7 @@ import { TimezoneSelector } from "@/components/event-form/timezone-selector";
 import { AllDayToggle } from "@/components/event-form/all-day-toggle";
 import { FormActions } from "@/components/event-form/form-actions";
 import { Logger } from "@/utils/logger";
+import { motion } from "framer-motion";
 
 const logger = new Logger("EventModal", true);
 
@@ -67,10 +68,8 @@ export function EventModal({
     onCloseAction,
   });
 
-  // Early return if modal is not open
   if (!isOpen) return null;
 
-  // Show multi-event navigation bar when applicable
   const showNavigation =
     typeof eventIndex === "number" &&
     typeof eventCount === "number" &&
@@ -87,11 +86,9 @@ export function EventModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-        {/* Modal Header */}
         <div className="flex flex-col">
           <ModalHeader mode={mode} onClose={onCloseAction} />
 
-          {/* Event Navigation Bar (conditional) */}
           {showNavigation && (
             <EventNavigationBar
               eventIndex={eventIndex!}
@@ -104,9 +101,7 @@ export function EventModal({
           )}
         </div>
 
-        {/* Event Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-6">
-          {/* Form Fields Section */}
           <EventFormFields
             title={title}
             setTitle={setTitle}
@@ -118,34 +113,41 @@ export function EventModal({
             setAttendees={setAttendees}
           />
 
-          {/* All Day Toggle */}
           <AllDayToggle isAllDay={isAllDay} onToggle={setIsAllDay} />
 
-          {/* Date and Time Selectors */}
-          <DateTimeSelector
-            label="Start"
-            icon={<BiSolidCalendarPlus className="h-5 w-5 text-white/70" />}
-            date={startDate}
-            onDateChange={handleStartDateChange}
-            isAllDay={isAllDay}
-          />
+          <motion.div 
+            layout 
+            className="flex flex-col space-y-6"
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              duration: 0.3
+            }}
+          >
+            <DateTimeSelector
+              label="Start"
+              icon={<BiSolidCalendarPlus className="h-5 w-5 text-white/70" />}
+              date={startDate}
+              onDateChange={handleStartDateChange}
+              isAllDay={isAllDay}
+            />
 
-          <DateTimeSelector
-            label="End"
-            icon={<BiCalendarCheck className="h-5 w-5 text-white/70" />}
-            date={endDate}
-            onDateChange={handleEndDateChange}
-            isAllDay={isAllDay}
-            minDate={startDate}
-          />
+            <DateTimeSelector
+              label="End"
+              icon={<BiCalendarCheck className="h-5 w-5 text-white/70" />}
+              date={endDate}
+              onDateChange={handleEndDateChange}
+              isAllDay={isAllDay}
+              minDate={startDate}
+            />
+          </motion.div>
 
-          {/* Timezone Selector */}
           <TimezoneSelector
             timezone={timezone}
             onTimezoneChange={setTimezone}
           />
 
-          {/* Form Actions */}
           <FormActions mode={mode} onDelete={onDelete} canDelete={!!onDelete} />
         </form>
       </div>

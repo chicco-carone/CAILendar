@@ -1,5 +1,6 @@
 import { Clock, Trash, MapPin, Users } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
+import { useTimeFormat } from "@/hooks/use-time-format";
 import type { EventDetailsModalProps } from "@/utils/types";
 
 export function EventDetailsModal({
@@ -8,6 +9,8 @@ export function EventDetailsModal({
   onEdit,
   onDelete,
 }: EventDetailsModalProps) {
+  const { formatTime } = useTimeFormat();
+  
   if (!event) return null;
 
   return (
@@ -19,7 +22,7 @@ export function EventDetailsModal({
         <div className="space-y-3 text-white">
           <p className="flex items-center">
             <Clock className="mr-2 h-5 w-5" />
-            {`${formatInTimeZone(event.startDate, event.timezone, "HH:mm")} - ${formatInTimeZone(event.endDate, event.timezone, "HH:mm")}`}
+            {`${formatTime(formatInTimeZone(event.startDate, event.timezone, "HH:mm"))} - ${formatTime(formatInTimeZone(event.endDate, event.timezone, "HH:mm"))}`}
           </p>
           {event.location && (
             <p className="flex items-center">

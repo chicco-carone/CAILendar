@@ -66,7 +66,7 @@ const ensureDate = (date: Date | string | undefined | null): Date => {
 const calculateEventLayout = (
   events: CalendarEvent[],
   dayStart: Date,
-  dayEnd: Date,
+  dayEnd: Date
 ) => {
   const sortedEvents = events
     .map((event) => ({
@@ -83,7 +83,7 @@ const calculateEventLayout = (
     for (const group of eventGroups) {
       const hasOverlap = group.some(
         (groupEvent) =>
-          event.start < groupEvent.end && event.end > groupEvent.start,
+          event.start < groupEvent.end && event.end > groupEvent.start
       );
       if (!hasOverlap) {
         group.push(event);
@@ -146,7 +146,7 @@ export function CalendarWeekView({
 }: WeekViewProps) {
   console.log(
     "[WeekView] Component rendered with events:",
-    filteredEvents.length,
+    filteredEvents.length
   );
 
   const normalizedEvents = filteredEvents;
@@ -159,12 +159,12 @@ export function CalendarWeekView({
   useEffect(() => {
     console.log(
       "[WeekView] Week days:",
-      weekDays.map((d) => format(ensureDate(d), "yyyy-MM-dd")),
+      weekDays.map((d) => format(ensureDate(d), "yyyy-MM-dd"))
     );
     console.log("[WeekView] Raw filtered events:", filteredEvents);
     console.log(
       "[WeekView] Raw filtered events length:",
-      filteredEvents.length,
+      filteredEvents.length
     );
     console.log("[WeekView] First event:", filteredEvents[0]);
     console.log("[WeekView] Normalized events:", normalizedEvents);
@@ -178,7 +178,7 @@ export function CalendarWeekView({
       const currentMinute = now.getMinutes();
 
       const dayIndex = weekDays.findIndex((day) =>
-        isSameDay(ensureDate(day), now),
+        isSameDay(ensureDate(day), now)
       );
       if (dayIndex === -1) {
         setCurrentTimePos(null);
@@ -249,11 +249,11 @@ export function CalendarWeekView({
               const safeDay = ensureDate(day);
               console.log(
                 "[WeekView] Processing day:",
-                format(safeDay, "yyyy-MM-dd"),
+                format(safeDay, "yyyy-MM-dd")
               );
               console.log(
                 "[WeekView] Normalized events count:",
-                normalizedEvents.length,
+                normalizedEvents.length
               );
 
               const dayEvents = normalizedEvents.filter((event) => {
@@ -286,13 +286,13 @@ export function CalendarWeekView({
               const eventLayouts = calculateEventLayout(
                 dayEvents,
                 dayStart,
-                dayEnd,
+                dayEnd
               );
 
               console.log(
                 "[WeekView] Events for day:",
                 format(safeDay, "yyyy-MM-dd"),
-                dayEvents,
+                dayEvents
               );
 
               return (
@@ -326,7 +326,7 @@ export function CalendarWeekView({
                       endMinutes: getMinutes(event.endDate),
                       duration: differenceInMinutes(
                         event.endDate,
-                        event.startDate,
+                        event.startDate
                       ),
                     });
 
@@ -352,7 +352,7 @@ export function CalendarWeekView({
                               event.attendees.some((attendee) =>
                                 attendee
                                   .toLowerCase()
-                                  .includes(searchQuery.toLowerCase()),
+                                  .includes(searchQuery.toLowerCase())
                               )))
                             ? "ring-2 ring-white"
                             : ""
@@ -369,9 +369,9 @@ export function CalendarWeekView({
                       >
                         <div className="font-medium">{event.title}</div>
                         <div className="opacity-80 text-[10px] mt-1">{`${formatTime(
-                          format(event.startDate, "HH:mm"),
+                          format(event.startDate, "HH:mm")
                         )} - ${formatTime(
-                          format(event.endDate, "HH:mm"),
+                          format(event.endDate, "HH:mm")
                         )}`}</div>
                       </div>
                     );

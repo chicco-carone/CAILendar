@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import * as React from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCalendarEvents } from "@/hooks/use-calendar-events";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTimeFormat } from "@/hooks/use-time-format";
@@ -43,7 +44,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { CalendarViewProps } from "@/utils/types";
 
-export function CalendarView({
+let logger: any = null;
+const getLogger = () => {
+  if (!logger) {
+    logger = {
+      debug: (...args: any[]) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[CalendarView]", ...args);
+        }
+      },
+    };
+  }
+  return logger;
+};
+//
+function CalendarView({
   events: originalEvents,
   onEventAdd,
   onEventUpdate,
@@ -52,7 +67,7 @@ export function CalendarView({
   currentDate: externalCurrentDate,
   onDateChange,
   initialView = "week",
-}: CalendarViewProps) {
+}: CalendarViewProps): React.JSX.Element {
   const [view, setView] = useState<"day" | "week" | "month" | "agenda">(
     (initialView as any) === "agenda" ? "agenda" : initialView,
   );
@@ -88,6 +103,20 @@ export function CalendarView({
     }
   }, [externalCurrentDate]);
 
+  const scrollToCurrentTime = useCallback(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const scrollPosition = currentHour * 60 - 100;
+
+    const calendarContainers = document.querySelectorAll(".calendar-container");
+    calendarContainers.forEach((container) => {
+      container.scrollTo({
+        top: scrollPosition,
+        behavior: "smooth",
+      });
+    });
+  }, []);
+
   useEffect(() => {
     if (view === "day" || view === "week") {
       const timer = setTimeout(() => {
@@ -95,7 +124,7 @@ export function CalendarView({
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [view]);
+  }, [view, scrollToCurrentTime]);
 
   useEffect(() => {
     setView((initialView as any) === "agenda" ? "agenda" : initialView);
@@ -129,15 +158,15 @@ export function CalendarView({
   }, []);
 
   const filteredEvents = useMemo(() => {
-    console.log(
-      "[CalendarView] Original events:",
+    getLogger().debug(
+      "Original events:",
       originalEvents.length,
       originalEvents,
     );
-    console.log("[CalendarView] Search query:", searchQuery);
+    getLogger().debug("Search query:", searchQuery);
 
     if (!searchQuery.trim()) {
-      console.log("[CalendarView] No search query, returning all events");
+      getLogger().debug("No search query, returning all events");
       return originalEvents;
     }
 
@@ -153,7 +182,7 @@ export function CalendarView({
             attendee.toLowerCase().includes(query),
           )),
     );
-    console.log("[CalendarView] Filtered events:", filtered.length, filtered);
+    getLogger().debug("Filtered events:", filtered.length, filtered);
     return filtered;
   }, [originalEvents, searchQuery]);
 
@@ -275,20 +304,6 @@ export function CalendarView({
       top: `${startMinutes}px`,
       height: `${duration}px`,
     };
-  };
-
-  const scrollToCurrentTime = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const scrollPosition = currentHour * 60 - 100;
-
-    const calendarContainers = document.querySelectorAll(".calendar-container");
-    calendarContainers.forEach((container) => {
-      container.scrollTo({
-        top: scrollPosition,
-        behavior: "smooth",
-      });
-    });
   };
 
   return (
@@ -497,3 +512,5 @@ export function CalendarView({
     </div>
   );
 }
+
+export default CalendarView;
