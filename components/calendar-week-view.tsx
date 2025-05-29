@@ -205,7 +205,7 @@ export function CalendarWeekView({
       <div className="calendar-container custom-scrollbar overflow-auto h-full">
         <div className="relative w-full">
           {/* Week Header */}
-          <div className="grid grid-cols-[auto,repeat(7,1fr)] border-b border-gray-200 dark:border-white/20 transition-colors">
+          <div className="sticky top-0 z-20 bg-gray-50/95 dark:bg-black/50 grid grid-cols-[auto,repeat(7,1fr)] border-b border-gray-200 dark:border-white/20 transition-colors">
             <div className="p-2 text-center text-gray-500 dark:text-white/50 text-xs w-16 min-w-16"></div>
             {weekDays.map((day, i) => (
               <div
@@ -384,7 +384,7 @@ export function CalendarWeekView({
           {/* Current Time Indicator */}
           {currentTimePos && (
             <div
-              className="absolute border-t-2 border-red-500 bg-red-500 h-[2px] z-20"
+              className="absolute border-t-2 border-red-500 bg-red-500 h-[2px] z-30"
               style={{
                 top: `${currentTimePos.top + 84}px`,
                 left: `4rem`,

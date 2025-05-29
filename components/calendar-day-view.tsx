@@ -52,7 +52,7 @@ export function CalendarDayView({
       <div className="calendar-container custom-scrollbar overflow-auto h-full">
         <div className="relative w-full">
           {/* Day Header */}
-          <div className="grid grid-cols-[60px,1fr] border-b border-gray-200 dark:border-white/20 transition-colors">
+          <div className="sticky top-0 z-20 bg-gray-50/95 dark:bg-black/50 grid grid-cols-[60px,1fr] border-b border-gray-200 dark:border-white/20 transition-colors">
             <div className="w-[60px] p-2 text-center text-gray-500 dark:text-white/50 text-xs"></div>
             <div className="p-2 text-center border-l border-gray-200 dark:border-white/20 transition-colors">
               <div className="text-xs text-gray-500 dark:text-white/70 font-medium">

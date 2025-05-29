@@ -10,6 +10,7 @@ import {
   isSameDayInTimezone,
   fromUTC,
 } from "@/utils/date-utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function CalendarMonthView({
   currentDate,
@@ -22,19 +23,20 @@ export function CalendarMonthView({
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isMobile = useIsMobile();
 
   const startDay = monthStart.getDay();
 
   const emptyCells = Array.from({ length: startDay }, (_, i) => (
     <div
       key={`empty-${i}`}
-      className="h-24 border border-gray-200 dark:border-white/20 transition-colors"
+      className="border border-gray-200 dark:border-white/20 transition-colors"
     ></div>
   ));
 
   return (
-    <div className="flex-1 p-4">
-      <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-white/20 rounded-lg overflow-hidden">
+    <div className="flex-1 p-4 flex flex-col">
+      <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-white/20 rounded-lg overflow-hidden flex-1">
         {/* Day headers */}
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
@@ -45,10 +47,8 @@ export function CalendarMonthView({
           </div>
         ))}
 
-        {/* Empty cells for days before the first day of the month */}
         {emptyCells}
 
-        {/* Days of the month */}
         {days.map((day) => {
           const dayEvents = filteredEvents.filter((event) => {
             const eventDate = fromUTC(event.startDate, event.timezone);
@@ -58,7 +58,7 @@ export function CalendarMonthView({
           return (
             <div
               key={day.toISOString()}
-              className={`h-24 border border-gray-200 dark:border-white/20 transition-colors ${
+              className={`border border-gray-200 dark:border-white/20 transition-colors flex flex-col ${
                 isSameMonth(day, currentDate)
                   ? "bg-white dark:bg-black/30"
                   : "bg-gray-50 dark:bg-black/20"
@@ -76,7 +76,7 @@ export function CalendarMonthView({
               >
                 {formatInTimezone(day, userTimezone, "d")}
               </div>
-              <div className="p-1 space-y-1">
+              <div className="p-1 space-y-1 flex-1 overflow-y-auto">
                 {dayEvents.map((event, i) => (
                   <div
                     key={i}
@@ -106,11 +106,12 @@ export function CalendarMonthView({
                     }`}
                     onClick={() => handleEventClick(event)}
                   >
-                    {formatInTimezone(
-                      fromUTC(event.startDate, event.timezone),
-                      event.timezone,
-                      "HH:mm",
-                    )}{" "}
+                    {!isMobile &&
+                      `${formatInTimezone(
+                        fromUTC(event.startDate, event.timezone),
+                        event.timezone,
+                        "HH:mm",
+                      )} `}
                     {event.title}
                   </div>
                 ))}
