@@ -1,7 +1,7 @@
 
 <div align="center">
 
-#<img src="public/logo-full.svg">
+<img src="public/logo-full.svg">
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/chicco-carone/CAILendar?style=social)](https://github.com/chicco-carone/CAILendar/stargazers)
