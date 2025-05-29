@@ -78,73 +78,82 @@ export function DateTimeSelector({
   };
 
   const handleTimeChange = (timeValue: string) => {
-    logger.info("🔍 handleTimeChange CALLED", {
-      label,
-      timeValue,
-      timeFormat,
-      date: date?.toISOString(),
-      stack: new Error().stack?.split('\n').slice(0, 5)
-    });
+    if (!timeValue || typeof timeValue !== 'string') {
+      logger.warn("Invalid timeValue provided", { label, timeValue });
+      return;
+    }
+
+    if (!validateDate(date, `${label} time change`)) {
+      logger.warn("Invalid date for time change", { label });
+      return;
+    }
     
     try {
-      if (!validateDate(date, `${label} time change`)) {
-        logger.warn("Invalid date for time change", { label, date });
-        return;
-      }
-
-      // Find the corresponding time slot and extract the 24h time
       let time24h: string;
       
       if (timeFormat === "12h" && timeValue.includes(" ")) {
-        logger.debug("Converting 12h to 24h format", { timeValue });
-        // Convert from 12h to 24h format
         const [timepart, period] = timeValue.split(" ");
-        const [hourStr, minuteStr] = timepart.split(":");
-        let hour = parseInt(hourStr, 10);
-        const minutes = parseInt(minuteStr, 10);
-        
-        logger.debug("Parsed 12h components", { hourStr, minuteStr, hour, minutes, period });
-        
-        if (period === "PM" && hour !== 12) {
-          hour += 12;
-        } else if (period === "AM" && hour === 12) {
-          hour = 0;
+        if (!timepart || !period) {
+          logger.warn("Invalid 12h format", { timeValue });
+          return;
         }
         
-        time24h = `${hour.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-        logger.debug("Converted to 24h", { time24h });
+        const [hourStr, minuteStr] = timepart.split(":");
+        if (!hourStr || !minuteStr) {
+          logger.warn("Invalid time format", { timeValue });
+          return;
+        }
+        
+        const hour = parseInt(hourStr, 10);
+        const minutes = parseInt(minuteStr, 10);
+        
+        if (isNaN(hour) || isNaN(minutes) || hour < 1 || hour > 12 || minutes < 0 || minutes > 59) {
+          logger.warn("Invalid time values", { hour, minutes, timeValue });
+          return;
+        }
+        
+        let hour24 = hour;
+        if (period === "PM" && hour !== 12) {
+          hour24 += 12;
+        } else if (period === "AM" && hour === 12) {
+          hour24 = 0;
+        }
+        
+        time24h = `${hour24.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
       } else {
-        logger.debug("Using 24h format directly", { timeValue });
-        // Already in 24h format
         time24h = timeValue;
       }
 
-      // Extract hours and minutes from the 24h time string
       const [hourStr, minuteStr] = time24h.split(":");
+      if (!hourStr || !minuteStr) {
+        logger.warn("Invalid 24h time format", { time24h });
+        return;
+      }
+      
       const hours = parseInt(hourStr, 10);
       const minutes = parseInt(minuteStr, 10);
       
-      logger.debug("Final parsed values", { hourStr, minuteStr, hours, minutes });
+      if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        logger.warn("Invalid parsed time values", { hours, minutes, time24h });
+        return;
+      }
 
-      // Create new date with the selected time
       const updatedDate = setTimeOnDate(date, hours, minutes);
-
-      logger.info("✅ Time change SUCCESS", {
-        label,
-        timeValue,
-        time24h,
-        hours,
-        minutes,
-        updatedDate: updatedDate?.toISOString(),
-      });
+      
+      if (!validateDate(updatedDate, "updated date after time change")) {
+        logger.error("Failed to create valid updated date", { hours, minutes });
+        return;
+      }
 
       onDateChange(updatedDate);
     } catch (error) {
-      logger.error("❌ CRITICAL Error in handleTimeChange", { error, timeValue, stack: error instanceof Error ? error.stack : 'Unknown error' });
+      logger.error("Error in handleTimeChange", { 
+        error: error instanceof Error ? error.message : String(error),
+        timeValue 
+      });
     }
   };
 
-  // Generate time slots (every 15 minutes)
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
     const totalMinutes = i * 15;
     const hours = Math.floor(totalMinutes / 60);
@@ -157,7 +166,6 @@ export function DateTimeSelector({
     return time24h;
   });
   
-  // Get current time value from the Date object
   const getCurrentTimeValue = () => {
     if (!date || isNaN(date.getTime())) {
       logger.warn("Invalid date in getCurrentTimeValue", { date });
@@ -165,20 +173,16 @@ export function DateTimeSelector({
     }
     
     try {
-      // Extract hours and minutes directly from the Date object
       const hours = date.getHours();
       const minutes = date.getMinutes();
       
-      // Round to nearest 15-minute interval
       const totalMinutes = hours * 60 + minutes;
       const roundedMinutes = Math.round(totalMinutes / 15) * 15;
       const roundedHours = Math.floor(roundedMinutes / 60) % 24;
       const roundedMins = roundedMinutes % 60;
       
-      // Create the time string in 24h format
       const time24h = `${roundedHours.toString().padStart(2, "0")}:${roundedMins.toString().padStart(2, "0")}`;
       
-      // Convert to desired format
       const timeValue = timeFormat === "12h" ? formatTime(time24h) : time24h;
       
       logger.debug("getCurrentTimeValue result", {

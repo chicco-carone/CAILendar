@@ -40,6 +40,7 @@ const sampleEvents: CalendarEvent[] = [
     location: "Meeting Room A",
     attendees: ["Team A", "Team B"],
     organizer: "John Doe",
+    calendarId: "my-calendar", // Added default calendarId
   },
   {
     id: 2,
@@ -64,6 +65,7 @@ const sampleEvents: CalendarEvent[] = [
     location: "Conference Room B",
     attendees: ["Project Team", "Stakeholders"],
     organizer: "Jane Smith",
+    calendarId: "work", // Added default calendarId
   },
   {
     id: 3,
@@ -88,6 +90,7 @@ const sampleEvents: CalendarEvent[] = [
     location: "Virtual Meeting",
     attendees: ["Sales Team", "Client"],
     organizer: "Mike Johnson",
+    calendarId: "personal", // Added default calendarId
   },
   {
     id: 4,
@@ -112,6 +115,7 @@ const sampleEvents: CalendarEvent[] = [
     location: "Office Garden",
     attendees: ["All Employees"],
     organizer: "HR Team",
+    calendarId: "my-calendar", // Added default calendarId
   },
   {
     id: 5,
@@ -136,6 +140,7 @@ const sampleEvents: CalendarEvent[] = [
     location: "Main Auditorium",
     attendees: ["Marketing Team", "Press", "Partners"],
     organizer: "Sarah Wilson",
+    calendarId: "work", // Added default calendarId
   },
 ];
 
@@ -149,10 +154,10 @@ console.log(
 );
 
 const myCalendars = [
-  { name: "My Calendar", color: "bg-blue-500" },
-  { name: "Work", color: "bg-green-500" },
-  { name: "Personal", color: "bg-purple-500" },
-  { name: "Family", color: "bg-orange-500" },
+  { id: "my-calendar", name: "My Calendar", color: "bg-blue-500" },
+  { id: "work", name: "Work", color: "bg-green-500" },
+  { id: "personal", name: "Personal", color: "bg-purple-500" },
+  { id: "family", name: "Family", color: "bg-orange-500" },
 ];
 
 console.log("[MockData] Sample events:", sampleEvents);

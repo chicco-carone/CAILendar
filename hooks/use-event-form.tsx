@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTimezone } from "@/hooks/use-timezone";
-import type { CalendarEvent, EventModalProps } from "@/utils/types";
+import type { CalendarEvent, EventModalProps, UserCalendar } from "@/utils/types";
+import { myCalendars } from "@/utils/mockData";
 import {
   createSafeDate,
   setTimeOnDate,
@@ -15,32 +16,23 @@ import { Logger } from "@/utils/logger";
 
 const logger = new Logger("useEventForm", true);
 
-// Calendar configuration constants
-const CALENDAR_OPTIONS = [
-  { name: "My Calendar", color: "bg-blue-500" },
-  { name: "Work", color: "bg-green-500" },
-  { name: "Personal", color: "bg-purple-500" },
-  { name: "Family", color: "bg-orange-500" },
-] as const;
-
-const COLOR_MAP: { [key: string]: string } = {
-  "My Calendar": "bg-blue-500",
-  Work: "bg-green-500",
-  Personal: "bg-purple-500",
-  Family: "bg-orange-500",
-};
-
 export function useEventForm({
   mode,
   event,
   onSaveAction,
   onModify,
   onCloseAction,
+  calendars, // Add calendars prop
 }: Pick<
   EventModalProps,
   "mode" | "event" | "onSaveAction" | "onModify" | "onCloseAction"
->) {
+> & {
+  calendars?: UserCalendar[];
+}) {
   const { browserTimezone } = useTimezone();
+
+  // Use calendars from props or fallback to mockData
+  const availableCalendars = calendars && calendars.length > 0 ? calendars : myCalendars;
 
   // Form state
   const [startDate, setStartDate] = useState<Date>(() => createSafeDate());
@@ -52,9 +44,13 @@ export function useEventForm({
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [attendees, setAttendees] = useState("");
-  const [calendar, setCalendar] = useState("My Calendar");
+  const [calendarId, setCalendarId] = useState(() => {
+    // Default to first available calendar
+    return availableCalendars[0]?.id || "my-calendar";
+  });
   const [timezone, setTimezone] = useState(browserTimezone || "Europe/Rome");
   const [isAllDay, setIsAllDay] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Create stable keys for dependency tracking
   const eventKey = event?.id;
@@ -72,6 +68,7 @@ export function useEventForm({
         eventTitle: event.title,
         eventStartDate: event.startDate?.toISOString(),
         eventEndDate: event.endDate?.toISOString(),
+        eventCalendarId: event.calendarId,
       });
 
       // Set form fields from event
@@ -104,13 +101,24 @@ export function useEventForm({
         setTimezone(event.timezone);
       }
 
-      // Set calendar based on event color
-      const calendarEntry = CALENDAR_OPTIONS.find(
-        (cal) => cal.color === event.color,
-      );
-      if (calendarEntry) {
-        logger.debug("Setting calendar:", calendarEntry.name);
-        setCalendar(calendarEntry.name);
+      // Set calendarId based on event.calendarId for "edit" mode
+      if (event.calendarId) {
+        logger.debug("Setting calendarId from event for edit:", event.calendarId);
+        setCalendarId(event.calendarId);
+      } else if (event.color) { // Legacy fallback: if no calendarId, try to match by color
+        const calendarEntryByColor = availableCalendars.find(
+          (cal) => cal.color === event.color,
+        );
+        if (calendarEntryByColor) {
+          logger.warn("Setting calendarId by color (legacy fallback for edit):", calendarEntryByColor.id, { eventId: event.id });
+          setCalendarId(calendarEntryByColor.id);
+        } else {
+          logger.warn("Event in edit mode has no calendarId and color does not match. Using default.", { eventId: event.id });
+          setCalendarId(availableCalendars[0]?.id || "my-calendar");
+        }
+      } else {
+        logger.warn("Event in edit mode has no calendarId and no color. Using default.", { eventId: event.id });
+        setCalendarId(availableCalendars[0]?.id || "my-calendar");
       }
 
       // Set attendees
@@ -140,8 +148,10 @@ export function useEventForm({
         getSafeMinutes(now),
       );
       setEndDate(newEndDate);
-      setCalendar("My Calendar");
-      logger.debug("Create mode state initialization completed");
+      // For "create" mode, event.calendarId is the defaultCalendarId passed from EventModal
+      const defaultCalendarId = event?.calendarId || availableCalendars[0]?.id || "my-calendar";
+      setCalendarId(defaultCalendarId); 
+      logger.debug("Create mode state initialization completed, calendarId set to:", defaultCalendarId);
     }
 
     const renderTime = performance.now() - renderStart;
@@ -150,7 +160,7 @@ export function useEventForm({
       duration: renderTime,
       eventKey,
     });
-  }, [mode, eventKey, eventStartDateStr, eventEndDateStr]);
+  }, [mode, eventKey, eventStartDateStr, eventEndDateStr, event?.calendarId, availableCalendars]);
 
   // Enhanced start date handler with end date validation
   const handleStartDateChange = (newStartDate: Date) => {
@@ -235,7 +245,7 @@ export function useEventForm({
   };
 
   // Form submission handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     const submitStart = performance.now();
     logger.info("Form submission started", {
       mode,
@@ -243,9 +253,16 @@ export function useEventForm({
       hasEvent: !!event,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
+      calendarId,
     });
 
     e.preventDefault();
+
+    // Prevent double submission
+    if (isSaving) {
+      logger.warn("Form submission already in progress");
+      return;
+    }
 
     // Validation
     if (!title || !startDate || !endDate) {
@@ -278,7 +295,17 @@ export function useEventForm({
       return;
     }
 
-    // Build event data
+    // Build event data - get color from selected calendar
+    const selectedCalendar = availableCalendars.find(opt => opt.id === calendarId);
+    const eventColor = selectedCalendar ? selectedCalendar.color : "bg-gray-500"; // Default color if not found
+
+    logger.debug("Building event data", {
+      selectedCalendar,
+      calendarId,
+      eventColor,
+      availableCalendars: availableCalendars.map(cal => ({ id: cal.id, name: cal.name }))
+    });
+
     const eventData: CalendarEvent = {
       id:
         mode === "edit" && event?.id
@@ -288,7 +315,7 @@ export function useEventForm({
       startDate: validStart,
       endDate: validEnd,
       timezone,
-      color: COLOR_MAP[calendar],
+      color: eventColor, // Use color from the selected calendar
       description,
       location,
       attendees: attendees
@@ -297,6 +324,7 @@ export function useEventForm({
         .filter((a) => a),
       organizer: mode === "edit" && event?.organizer ? event.organizer : "You",
       isAllDay,
+      calendarId: calendarId, // Add calendarId to the event data
     };
 
     logger.info("Event data prepared for submission", {
@@ -305,39 +333,51 @@ export function useEventForm({
       title: eventData.title,
       startDate: eventData.startDate.toISOString(),
       endDate: eventData.endDate.toISOString(),
+      calendarId: eventData.calendarId,
+      color: eventData.color,
     });
 
+    setIsSaving(true);
+
     try {
-      // Save the event
+      // Call onModify for edit mode
       if (onModify && mode === "edit") {
         onModify(eventData);
       }
-      onSaveAction(eventData);
-      onCloseAction();
+      
+      // Save the event and wait for completion
+      const saveResult = await Promise.resolve(onSaveAction(eventData));
+      
+      // Only close modal if save was successful
+      if (saveResult !== false) {
+        onCloseAction();
 
-      // Reset form for create mode
-      if (mode === "create") {
-        logger.debug("Resetting form state after successful creation");
-        setTitle("");
-        setLocation("");
-        setDescription("");
-        setAttendees("");
-        const now = createSafeDate();
-        setStartDate(now);
-        const newEndDate = setTimeOnDate(
-          now,
-          getSafeHours(now) + 1,
-          getSafeMinutes(now),
-        );
-        setEndDate(newEndDate);
+        // Reset form for create mode
+        if (mode === "create") {
+          logger.debug("Resetting form state after successful creation");
+          setTitle("");
+          setLocation("");
+          setDescription("");
+          setAttendees("");
+          const now = createSafeDate();
+          setStartDate(now);
+          const newEndDate = setTimeOnDate(
+            now,
+            getSafeHours(now) + 1,
+            getSafeMinutes(now),
+          );
+          setEndDate(newEndDate);
+        }
+
+        const submitTime = performance.now() - submitStart;
+        logger.info("Form submission completed successfully", {
+          eventId: eventData.id,
+          mode,
+          duration: submitTime,
+        });
+      } else {
+        logger.warn("Save operation failed, keeping modal open");
       }
-
-      const submitTime = performance.now() - submitStart;
-      logger.info("Form submission completed successfully", {
-        eventId: eventData.id,
-        mode,
-        duration: submitTime,
-      });
     } catch (error) {
       logger.error("Form submission failed", error, {
         mode,
@@ -348,6 +388,8 @@ export function useEventForm({
           endDate: eventData.endDate.toISOString(),
         },
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -359,16 +401,17 @@ export function useEventForm({
     location,
     description,
     attendees,
-    calendar,
+    calendarId,
     timezone,
     isAllDay,
+    isSaving,
 
     // State setters
     setTitle,
     setLocation,
     setDescription,
     setAttendees,
-    setCalendar,
+    setCalendarId,
     setTimezone,
     setIsAllDay,
 
@@ -380,8 +423,7 @@ export function useEventForm({
     // Form submission
     handleSubmit,
 
-    // Constants
-    calendarOptions: CALENDAR_OPTIONS,
-    colorMap: COLOR_MAP,
+    // Constants - now dynamic from mockData
+    calendarOptions: availableCalendars,
   };
 }

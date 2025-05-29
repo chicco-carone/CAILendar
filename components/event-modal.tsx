@@ -1,9 +1,16 @@
 "use client";
 
 import type React from "react";
-import { BiSolidCalendarPlus, BiCalendarCheck } from "react-icons/bi";
-import type { EventModalProps } from "@/utils/types";
+import { BiSolidCalendarPlus, BiCalendarCheck, BiSolidSelectMultiple } from "react-icons/bi";
+import type { EventModalProps, UserCalendar } from "@/utils/types";
 import { useEventForm } from "@/hooks/use-event-form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ModalHeader } from "@/components/event-form/modal-header";
 import { EventNavigationBar } from "@/components/event-form/event-navigation-bar";
 import { EventFormFields } from "@/components/event-form/event-form-fields";
@@ -30,10 +37,23 @@ export function EventModal({
   canNext,
   eventIndex,
   eventCount,
-}: EventModalProps) {
+  // Props for calendar selection
+  calendars,
+  defaultCalendarId,
+}: EventModalProps & { calendars?: UserCalendar[]; defaultCalendarId?: string }) {
   const renderStart = performance.now();
 
-  logger.debug("EventModal render", {
+  logger.debug("EventModal received props:", {
+    mode,
+    event,
+    calendars,
+    defaultCalendarId,
+    isOpen,
+    eventIndex,
+    eventCount,
+  });
+
+  logger.debug("EventModal render - initial state check", {
     mode,
     eventId: event?.id,
     isOpen,
@@ -49,27 +69,43 @@ export function EventModal({
     location,
     description,
     attendees,
+    calendarId,
     timezone,
     isAllDay,
+    isSaving,
     setTitle,
     setLocation,
     setDescription,
     setAttendees,
+    setCalendarId,
     setTimezone,
     setIsAllDay,
     handleStartDateChange,
     handleEndDateChange,
     handleAllDayToggle,
     handleSubmit,
+    calendarOptions,
   } = useEventForm({
     mode,
-    event,
+    // Pass the event as is for edit mode; for create mode, pass an object with the defaultCalendarId
+    event: mode === 'edit' ? event : { calendarId: defaultCalendarId },
     onSaveAction,
     onModify,
     onCloseAction,
+    calendars, // Pass calendars to the hook
   });
 
+  logger.debug("EventModal: useEventForm returned", { calendarId, calendarOptions });
+
   if (!isOpen) return null;
+
+  // Use passed-in calendars if available, otherwise fallback to hook's calendarOptions
+  const availableCalendars = calendars && calendars.length > 0 ? calendars : calendarOptions;
+  logger.debug("EventModal: availableCalendars for Select", { 
+    availableCalendars, 
+    calendarsProp: calendars, 
+    calendarOptionsFromHook: calendarOptions 
+  });
 
   const showNavigation =
     typeof eventIndex === "number" &&
@@ -114,9 +150,36 @@ export function EventModal({
             setAttendees={setAttendees}
           />
 
+          {availableCalendars && availableCalendars.length > 1 && (
+            <div className="space-y-2">
+              <label htmlFor="calendar-select" className="text-sm font-medium text-white/90">
+                Calendar
+              </label>
+              <Select value={calendarId} onValueChange={(newCalendarId) => {
+                logger.debug("EventModal: Calendar Select onValueChange", { newCalendarId, oldCalendarId: calendarId });
+                setCalendarId(newCalendarId);
+              }}>
+                <SelectTrigger id="calendar-select" className="w-full bg-white/5 border-white/20 text-white/90">
+                  <BiSolidSelectMultiple className="h-5 w-5 text-white/70 mr-2" />
+                  <SelectValue placeholder="Select calendar" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800/90 backdrop-blur-md border-white/20 text-white/90">
+                  {availableCalendars.map((cal) => (
+                    <SelectItem key={cal.id} value={cal.id} className="hover:bg-white/10 focus:bg-white/10">
+                      <div className="flex items-center">
+                        <span className={`w-3 h-3 rounded-full mr-2 ${cal.color}`}></span>
+                        {cal.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <AllDayToggle isAllDay={isAllDay} onToggle={handleAllDayToggle} />
 
-          <motion.div 
+          <motion.div
             layout 
             className="flex flex-col space-y-6"
             transition={{ 
@@ -149,7 +212,7 @@ export function EventModal({
             onTimezoneChange={setTimezone}
           />
 
-          <FormActions mode={mode} onDelete={onDelete} canDelete={!!onDelete} />
+          <FormActions mode={mode} onDelete={onDelete} canDelete={!!onDelete} isSubmitting={isSaving} />
         </form>
       </div>
     </div>
