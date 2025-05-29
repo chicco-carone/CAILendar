@@ -35,6 +35,14 @@ import { v4 as uuidv4 } from "uuid";
 import { Camera as CameraPro } from "react-camera-pro";
 import type { AIEventModalProps, AIConflictInfo } from "@/utils/types";
 
+const loadingMessages = [
+  "Sto analizzando i tuoi dati...",
+  "L'intelligenza artificiale sta elaborando le informazioni...",
+  "Creando eventi perfetti per te...",
+  "Ottimizzando date e orari...",
+  "Quasi pronto, un ultimo controllo..."
+];
+
 export function AIEventModal({
   isOpen,
   onCloseAction,
@@ -46,9 +54,10 @@ export function AIEventModal({
   const [generatedEvents, setGeneratedEvents] = useState<any[]>([]);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showWarnings, setShowWarnings] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);  const [showWarnings, setShowWarnings] = useState(true);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState(0);
   const cameraRef = useRef<any>(null);
 
   const {
@@ -68,7 +77,6 @@ export function AIEventModal({
     resetTranscript,
     browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
-
   React.useEffect(() => {
     if (!listening && transcript) {
       setPrompt((prev) => (prev ? prev + " " + transcript : transcript));
@@ -76,6 +84,26 @@ export function AIEventModal({
     }
     // eslint-disable-next-line
   }, [listening]);
+  // Effect per il ciclo dei messaggi di caricamento
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (showLoadingScreen) {
+      interval = setInterval(() => {
+        setCurrentLoadingMessage((prev) => (prev + 1) % loadingMessages.length);
+      }, 2000); // Cambia messaggio ogni 2 secondi
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showLoadingScreen]);
+
+  // Effect per resettare lo stato quando il modal si chiude
+  React.useEffect(() => {
+    if (!isOpen) {
+      setShowLoadingScreen(false);
+      setCurrentLoadingMessage(0);
+    }
+  }, [isOpen]);
 
   const handleMicClick = () => {
     if (!browserSupportsSpeechRecognition) return;
@@ -86,8 +114,21 @@ export function AIEventModal({
       SpeechRecognition.startListening({ language: "it-IT" });
     }
   };
-
   if (!isOpen) return null;
+
+  const handleCloseModal = () => {
+    setShowLoadingScreen(false);
+    setCurrentLoadingMessage(0);
+    setPrompt("");
+    setImage(null);
+    setFile(null);
+    setGeneratedEvents([]);
+    setCurrentEventIndex(0);
+    setShowEventModal(false);
+    clearWarningsAndConflicts();
+    clearError();
+    onCloseAction();
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
@@ -141,7 +182,6 @@ export function AIEventModal({
         });
     }
   };
-
   const handleSubmit = async () => {
     console.log("[AI Modal] handleSubmit called!");
     console.log("[AI Modal] Form state:", { prompt, image, file });
@@ -154,6 +194,10 @@ export function AIEventModal({
     console.log("[AI Modal] Clearing previous state...");
     clearWarningsAndConflicts();
     clearError();
+
+    // Mostra la schermata di caricamento
+    setShowLoadingScreen(true);
+    setCurrentLoadingMessage(0);
 
     try {
       let events: any[] = [];
@@ -204,6 +248,9 @@ export function AIEventModal({
         ];
       }
 
+      // Nascondi la schermata di caricamento
+      setShowLoadingScreen(false);
+
       if (events.length > 0) {
         setGeneratedEvents(events);
         setCurrentEventIndex(0);
@@ -211,6 +258,10 @@ export function AIEventModal({
       }
     } catch (e) {
       console.error("Error during enhanced AI processing:", e);
+      
+      // Nascondi la schermata di caricamento anche in caso di errore
+      setShowLoadingScreen(false);
+      
       setGeneratedEvents([
         {
           id: uuidv4(),
@@ -231,35 +282,21 @@ export function AIEventModal({
     }
   };
 
-  const handleSaveEvent = (eventData: any) => {
-    onSaveAction(eventData);
+  const handleSaveEvent = (eventData: any) => {    onSaveAction(eventData);
     if (currentEventIndex < generatedEvents.length - 1) {
       setCurrentEventIndex(currentEventIndex + 1);
     } else {
       setShowEventModal(false);
-      onCloseAction();
-      setPrompt("");
-      setImage(null);
-      setFile(null);
-      setGeneratedEvents([]);
-      setCurrentEventIndex(0);
-      clearWarningsAndConflicts();
+      handleCloseModal();
     }
   };
-
   const handleDeleteEvent = () => {
     const newEvents = generatedEvents.filter(
       (_, idx) => idx !== currentEventIndex
     );
     if (newEvents.length === 0) {
       setShowEventModal(false);
-      onCloseAction();
-      setPrompt("");
-      setImage(null);
-      setFile(null);
-      setGeneratedEvents([]);
-      setCurrentEventIndex(0);
-      clearWarningsAndConflicts();
+      handleCloseModal();
       return;
     }
     setGeneratedEvents(newEvents);
@@ -297,10 +334,53 @@ export function AIEventModal({
         return Info;
     }
   };
-
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+      {/* Schermata di caricamento */}
+      {showLoadingScreen && (
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center">
+          <div className="bg-white/10 dark:bg-black/30 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl p-8 mx-4 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex flex-col items-center space-y-6">
+              {/* Logo che gira */}
+              <div className="relative">
+                <img
+                  src="/logo.svg"
+                  alt="CAILendar Logo"
+                  className="w-16 h-16 animate-spin"
+                  style={{
+                    animationDuration: '3s',
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: 'infinite'
+                  }}
+                />
+              </div>
+              
+              {/* Messaggio di caricamento */}
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Elaborazione in corso...
+                </h3>
+                <p 
+                  className="text-white/70 text-sm transition-all duration-500 ease-in-out min-h-[20px]"
+                  key={currentLoadingMessage}
+                >
+                  {loadingMessages[currentLoadingMessage]}
+                </p>
+              </div>
+              
+              {/* Barra di caricamento animata */}
+              <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-purple-400 to-blue-400 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={cn(
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center",
+        showLoadingScreen && "hidden"
+      )}>
         <div className="bg-white/10 dark:bg-black/30 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
           <div className="flex items-center justify-between p-4 border-b border-white/20">
             <h2 className="text-xl font-semibold text-white flex items-center">
@@ -311,11 +391,10 @@ export function AIEventModal({
                   {lastMetadata.parsingMethod}
                 </Badge>
               )}
-            </h2>
-            <Button
+            </h2>            <Button
               variant="ghost"
               size="icon"
-              onClick={onCloseAction}
+              onClick={handleCloseModal}
               className="text-white hover:bg-white/10"
             >
               <X className="h-5 w-5" />
@@ -597,19 +676,16 @@ export function AIEventModal({
                 )}
               </div>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-2 p-4 border-t border-white/20">
+          </div>          <div className="flex justify-end gap-2 p-4 border-t border-white/20">
             <Button
               variant="outline"
-              onClick={onCloseAction}
+              onClick={handleCloseModal}
               className="border-white/20 text-white hover:bg-white/10"
             >
               Cancel
-            </Button>
-            <Button
+            </Button><Button
               onClick={handleSubmit}
-              disabled={loading || (!prompt && !image)}
+              disabled={loading || showLoadingScreen || (!prompt && !image)}
               className="bg-purple-500 hover:bg-purple-600 text-white"
             >
               {loading ? (
