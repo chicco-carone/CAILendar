@@ -10,6 +10,13 @@ export interface CalendarEvent {
   attendees?: string[];
   organizer?: string;
   isAllDay?: boolean;
+  calendarId: string; // Added for multi-calendar support
+}
+
+export interface UserCalendar { // Added for multi-calendar support
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface TimezoneAwareDate {
@@ -79,13 +86,13 @@ export interface AgendaViewProps {
 export interface CreateEventModalProps {
   isOpen: boolean;
   onCloseAction: () => void;
-  onSaveAction: (eventData: Partial<CalendarEvent>) => void;
+  onSaveAction: (eventData: Partial<CalendarEvent>) => Promise<boolean> | boolean | void;
 }
 
 export interface EventModalProps {
   isOpen: boolean;
   onCloseAction: () => void;
-  onSaveAction: (eventData: Partial<CalendarEvent>) => void;
+  onSaveAction: (eventData: Partial<CalendarEvent>) => Promise<boolean> | boolean | void;
   onDelete?: () => void;
   onModify?: (eventData: Partial<CalendarEvent>) => void;
   event?: Partial<CalendarEvent>;
@@ -182,6 +189,7 @@ export interface SerializedCalendarEvent {
   attendees?: string[];
   organizer?: string;
   isAllDay?: boolean;
+  calendarId: string; // Added for multi-calendar support
 }
 
 export interface AIModel {
