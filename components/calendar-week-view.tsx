@@ -11,12 +11,15 @@ import {
   getHours,
   getMinutes,
 } from "date-fns";
+import { Logger } from "@/utils/logger";
 import { useEffect, useState } from "react";
 import type { CalendarEvent, WeekViewProps } from "@/utils/types";
 
+const logger = new Logger("CalendarWeekView", typeof window !== "undefined");
+
 const ensureDate = (date: Date | string | undefined | null): Date => {
   if (date === undefined || date === null) {
-    console.warn("Received undefined or null date, returning current date");
+    logger.warn("Received undefined or null date, returning current date");
     return new Date();
   }
 
@@ -55,11 +58,11 @@ const ensureDate = (date: Date | string | undefined | null): Date => {
         return fallbackDate;
       }
     } catch (error) {
-      console.error(`Error parsing date string: ${date}`, error);
+      logger.error(`Error parsing date string: ${date}`, error);
     }
   }
 
-  console.warn(`Could not parse date: ${date}, falling back to current date`);
+  logger.warn(`Could not parse date: ${date}, falling back to current date`);
   return new Date();
 };
 
@@ -114,12 +117,15 @@ const calculateEventLayout = (
       const topPosition = startMinutes;
       const heightPixels = Math.max(endMinutes - startMinutes, 30);
 
-      console.log(`[WeekView] Calculating layout for event "${event.title}":`, {
-        startTime: `${startHour}:${startMinute}`,
-        endTime: `${endHour}:${endMinute}`,
-        topPos: topPosition,
-        height: heightPixels,
-      });
+      logger.debug(
+        `Calculating layout for event "${event.title}":`,
+        {
+          startTime: `${startHour}:${startMinute}`,
+          endTime: `${endHour}:${endMinute}`,
+          topPos: topPosition,
+          height: heightPixels,
+        }
+      );
 
       eventLayouts.set(event.id, {
         top: topPosition,
@@ -144,9 +150,9 @@ export function CalendarWeekView({
   formatTime,
   formatHour,
 }: WeekViewProps) {
-  console.log(
-    "[WeekView] Component rendered with events:",
-    filteredEvents.length
+
+  logger.info(
+    `Component rendered with events: ${filteredEvents.length}`
   );
 
   const normalizedEvents = filteredEvents;
@@ -157,17 +163,17 @@ export function CalendarWeekView({
   } | null>(null);
 
   useEffect(() => {
-    console.log(
-      "[WeekView] Week days:",
+    logger.debug(
+      "Week days:",
       weekDays.map((d) => format(ensureDate(d), "yyyy-MM-dd"))
     );
-    console.log("[WeekView] Raw filtered events:", filteredEvents);
-    console.log(
-      "[WeekView] Raw filtered events length:",
+    logger.debug("Raw filtered events:", filteredEvents);
+    logger.debug(
+      "Raw filtered events length:",
       filteredEvents.length
     );
-    console.log("[WeekView] First event:", filteredEvents[0]);
-    console.log("[WeekView] Normalized events:", normalizedEvents);
+    logger.debug("First event:", filteredEvents[0]);
+    logger.debug("Normalized events:", normalizedEvents);
   }, [weekDays, filteredEvents, normalizedEvents]);
 
   useEffect(() => {
@@ -247,20 +253,20 @@ export function CalendarWeekView({
             {/* Week Grid */}
             {weekDays.map((day, dayIndex) => {
               const safeDay = ensureDate(day);
-              console.log(
-                "[WeekView] Processing day:",
-                format(safeDay, "yyyy-MM-dd")
+
+              logger.debug(
+                `Processing day: ${format(safeDay, "yyyy-MM-dd")}`
               );
-              console.log(
-                "[WeekView] Normalized events count:",
-                normalizedEvents.length
+              logger.debug(
+                `Normalized events count: ${normalizedEvents.length}`
               );
 
               const dayEvents = normalizedEvents.filter((event) => {
                 const eventStart = ensureDate(event.startDate);
                 const eventEnd = ensureDate(event.endDate);
 
-                console.log("[WeekView] Checking event:", {
+
+                logger.debug("Checking event:", {
                   title: event.title,
                   eventStart: format(eventStart, "yyyy-MM-dd HH:mm"),
                   eventEnd: format(eventEnd, "yyyy-MM-dd HH:mm"),
@@ -277,7 +283,7 @@ export function CalendarWeekView({
                   isSameDay(safeDay, eventStart) ||
                   isSameDay(safeDay, eventEnd);
 
-                console.log("[WeekView] Event visible:", isVisible);
+                logger.debug(`Event visible: ${isVisible}`);
                 return isVisible;
               });
 
@@ -289,9 +295,9 @@ export function CalendarWeekView({
                 dayEnd
               );
 
-              console.log(
-                "[WeekView] Events for day:",
-                format(safeDay, "yyyy-MM-dd"),
+
+              logger.debug(
+                `Events for day: ${format(safeDay, "yyyy-MM-dd")}`,
                 dayEvents
               );
 
@@ -315,7 +321,8 @@ export function CalendarWeekView({
                     const layout = eventLayouts.get(event.id);
                     if (!layout) return null;
 
-                    console.log("[WeekView] Rendering event:", {
+
+                    logger.debug("Rendering event:", {
                       title: event.title,
                       layout,
                       startDate: format(event.startDate, "yyyy-MM-dd HH:mm"),
