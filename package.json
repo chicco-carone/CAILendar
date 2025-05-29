@@ -69,6 +69,7 @@
     "pino": "^9.6.0",
     "react": "^19",
     "react-calendar": "latest",
+    "react-camera-pro": "^1.4.0",
     "react-day-picker": "9.7.0",
     "react-dom": "^19",
     "react-hook-form": "^7.54.1",
