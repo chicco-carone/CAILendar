@@ -21,10 +21,9 @@ import { AnimatedActionButton } from "@/components/animated-action-button";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/sidebar";
 import {
-  saveEventsToLocalStorage,
-  loadEventsFromLocalStorage,
   downloadEventsAsICS,
 } from "@/lib/ical-utils";
+import { calendarStorage } from "@/utils/calendar-storage";
 import type { CalendarEvent } from "@/utils/types";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -67,19 +66,28 @@ export default function Home() {
 
   useEffect(() => {
     getLogger().info("useEffect starting...");
-    getLogger().debug(
-      "Sample events available:",
-      sampleEvents.length,
-      sampleEvents,
-    );
-    getLogger().debug("Current events state:", events.length, events);
-
-    getLogger().info("Clearing localStorage");
-    localStorage.removeItem("calendar-events");
-
-    getLogger().info("Using fresh sample events");
-    setEvents(sampleEvents);
-    saveEventsToLocalStorage(sampleEvents);
+    
+    try {
+      // Load existing events from storage
+      const storedEvents = calendarStorage.getEvents();
+      getLogger().debug("Loaded events from storage:", storedEvents.length, storedEvents);
+      
+      if (storedEvents.length > 0) {
+        getLogger().info("Using stored events");
+        setEvents(storedEvents);
+      } else {
+        getLogger().info("No stored events found, using sample events");
+        setEvents(sampleEvents);
+        // Save sample events to storage
+        sampleEvents.forEach(event => {
+          calendarStorage.addEvent(event);
+        });
+      }
+    } catch (error) {
+      getLogger().error("Error loading events from storage:", error);
+      getLogger().info("Falling back to sample events");
+      setEvents(sampleEvents);
+    }
 
     setIsLoaded(true);
     getLogger().info("useEffect completed");
@@ -89,7 +97,7 @@ export default function Home() {
     getLogger().debug("Events state changed:", events.length, events);
   }, [events]);
 
-  const handleEventAdd = (eventData: Partial<CalendarEvent>) => {
+  const handleEventAdd = async (eventData: Partial<CalendarEvent>): Promise<boolean> => {
     const newEvent: CalendarEvent = {
       ...eventData,
       id: eventData.id ?? Date.now(),
@@ -103,46 +111,82 @@ export default function Home() {
       location: eventData.location ?? "",
       attendees: eventData.attendees ?? [],
       organizer: eventData.organizer ?? "You",
+      calendarId: eventData.calendarId ?? myCalendars[0]?.id ?? "my-calendar", // Ensure calendarId is set
     };
-    const updatedEvents = [...events, newEvent];
-    setEvents(updatedEvents);
-    saveEventsToLocalStorage(updatedEvents);
-    toast({
-      title: "Event Created",
-      description: `"${newEvent.title}" has been added to your calendar.`,
-      duration: 3000,
-    });
+    
+    try {
+      calendarStorage.addEvent(newEvent);
+      const updatedEvents = [...events, newEvent];
+      setEvents(updatedEvents);
+      toast({
+        title: "Event Created",
+        description: `"${newEvent.title}" has been added to your calendar.`,
+        duration: 3000,
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save event. Please try again.",
+        duration: 3000,
+      });
+      getLogger().error("Error saving event:", error);
+      return false;
+    }
   };
 
-  const handleEventUpdate = (eventData: Partial<CalendarEvent>) => {
-    if (!eventData.id) return;
-    const updatedEvents = events.map((event) =>
-      event.id === eventData.id ? { ...event, ...eventData } : event,
-    );
-    setEvents(updatedEvents);
-    saveEventsToLocalStorage(updatedEvents);
-    toast({
-      title: "Event Updated",
-      description: `"${eventData.title ?? "Event"}" has been updated.`,
-      duration: 3000,
-    });
+  const handleEventUpdate = async (eventData: Partial<CalendarEvent>): Promise<boolean> => {
+    if (!eventData.id) return false;
+    
+    try {
+      const updatedEvent = { ...events.find(e => e.id === eventData.id), ...eventData } as CalendarEvent;
+      calendarStorage.updateEvent(updatedEvent);
+      
+      const updatedEvents = events.map((event) =>
+        event.id === eventData.id ? updatedEvent : event,
+      );
+      setEvents(updatedEvents);
+      
+      toast({
+        title: "Event Updated",
+        description: `"${eventData.title ?? "Event"}" has been updated.`,
+        duration: 3000,
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update event. Please try again.",
+        duration: 3000,
+      });
+      getLogger().error("Error updating event:", error);
+      return false;
+    }
   };
 
   const handleEventDelete = (eventId: number | string) => {
     const eventToDelete = events.find((event) => event.id === eventId);
 
-    const updatedEvents = events.filter((event) => event.id !== eventId);
-    setEvents(updatedEvents);
+    try {
+      calendarStorage.deleteEvent(eventId);
+      const updatedEvents = events.filter((event) => event.id !== eventId);
+      setEvents(updatedEvents);
 
-    saveEventsToLocalStorage(updatedEvents);
-
-    toast({
-      title: "Event Deleted",
-      description: eventToDelete
-        ? `"${eventToDelete.title}" has been removed.`
-        : "Event has been removed.",
-      duration: 3000,
-    });
+      toast({
+        title: "Event Deleted",
+        description: eventToDelete
+          ? `"${eventToDelete.title}" has been removed.`
+          : "Event has been removed.",
+        duration: 3000,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        duration: 3000,
+      });
+      getLogger().error("Error deleting event:", error);
+    }
   };
 
   const handleDateSelect = (date: Date) => {
@@ -405,6 +449,8 @@ export default function Home() {
             currentDate={currentDate}
             onDateChange={handleMainCalendarDateChange}
             initialView={currentView}
+            calendars={myCalendars} // Pass calendars from mockData
+            defaultCalendarId={myCalendars[0]?.id} // Pass defaultCalendarId
           />
         </div>
         {/* Pulsante azione fluttuante in basso a destra */}
@@ -433,10 +479,20 @@ export default function Home() {
       {/* Regular Event Modal */}
       <EventModal
         isOpen={isEventModalOpen}
-        onCloseAction={() => setIsEventModalOpen(false)}
-        onSaveAction={handleEventAdd}
+        onCloseAction={() => {
+          setIsEventModalOpen(false);
+          setEditingEvent(null); // Clear editing event on close
+        }}
+        onSaveAction={editingEvent && editingEvent.id ? handleEventUpdate : handleEventAdd}
+        onDelete={editingEvent && editingEvent.id ? () => {
+          handleEventDelete(editingEvent.id!);
+          setIsEventModalOpen(false);
+          setEditingEvent(null);
+        } : undefined}
         event={editingEvent ?? undefined}
         mode={editingEvent && editingEvent.id ? "edit" : "create"}
+        calendars={myCalendars} // Pass the list of calendars
+        defaultCalendarId={myCalendars[0]?.id} // Pass a default calendar ID
       />
 
       {/* AI Event Modal */}

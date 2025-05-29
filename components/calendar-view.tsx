@@ -31,7 +31,8 @@ import { CalendarDayView } from "@/components/calendar-day-view";
 import { CalendarWeekView } from "@/components/calendar-week-view";
 import { CalendarMonthView } from "@/components/calendar-month-view";
 import { CalendarAgendaView } from "@/components/calendar-agenda-view";
-import type { CalendarEvent } from "@/utils/types";
+import type { CalendarEvent, UserCalendar } from "@/utils/types";
+import { myCalendars } from "@/utils/mockData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +58,7 @@ const getLogger = () => {
   }
   return logger;
 };
-//
+
 function CalendarView({
   events: originalEvents,
   onEventAdd,
@@ -67,14 +68,20 @@ function CalendarView({
   currentDate: externalCurrentDate,
   onDateChange,
   initialView = "week",
-}: CalendarViewProps): React.JSX.Element {
+  calendars, // Add calendars prop
+  defaultCalendarId, // Add defaultCalendarId prop
+}: CalendarViewProps & { 
+  calendars?: UserCalendar[]; 
+  defaultCalendarId?: string; 
+}): React.JSX.Element {
   const [view, setView] = useState<"day" | "week" | "month" | "agenda">(
     (initialView as any) === "agenda" ? "agenda" : initialView,
   );
-  const [currentDate, setCurrentDate] = useState(
-    externalCurrentDate || new Date(),
-  );
+  const [currentDate, setCurrentDate] = useState<Date | null>(externalCurrentDate || null);
   const { timeFormat, setTimeFormat, formatTime, formatHour } = useTimeFormat();
+
+  // Use calendars from props or fallback to mockData
+  const availableCalendars = calendars && calendars.length > 0 ? calendars : myCalendars;
 
   const {
     isModalOpen,
@@ -100,8 +107,10 @@ function CalendarView({
   useEffect(() => {
     if (externalCurrentDate) {
       setCurrentDate(externalCurrentDate);
+    } else if (currentDate === null) {
+      setCurrentDate(new Date());
     }
-  }, [externalCurrentDate]);
+  }, [externalCurrentDate, currentDate]);
 
   const scrollToCurrentTime = useCallback(() => {
     const now = new Date();
@@ -141,11 +150,12 @@ function CalendarView({
         startDate: now,
         endDate: endDate,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        color: "bg-blue-500",
+        color: availableCalendars[0]?.color || "bg-blue-500",
         description: "",
         location: "",
         attendees: [],
         organizer: "You",
+        calendarId: defaultCalendarId || availableCalendars[0]?.id || "my-calendar",
       };
 
       setEditingEvent(newEvent);
@@ -155,7 +165,7 @@ function CalendarView({
     document.addEventListener("create-event", handleCreateEvent);
     return () =>
       document.removeEventListener("create-event", handleCreateEvent);
-  }, []);
+  }, [availableCalendars, defaultCalendarId]);
 
   const filteredEvents = useMemo(() => {
     getLogger().debug(
@@ -191,6 +201,7 @@ function CalendarView({
   };
 
   const handleTimeSlotClick = (day: number, hour: number) => {
+    if (!currentDate) return;
     const slotDate = new Date(currentDate);
     slotDate.setHours(hour, 0, 0, 0);
 
@@ -203,11 +214,12 @@ function CalendarView({
       startDate: slotDate,
       endDate: endDate,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      color: "bg-blue-500",
+      color: availableCalendars[0]?.color || "bg-blue-500",
       description: "",
       location: "",
       attendees: [],
       organizer: "You",
+      calendarId: defaultCalendarId || availableCalendars[0]?.id || "my-calendar",
     };
 
     setEditingEvent(newEvent);
@@ -215,6 +227,7 @@ function CalendarView({
   };
 
   const nextDate = () => {
+    if (!currentDate) return;
     let newDate;
     if (view === "day") {
       newDate = addDays(currentDate, 1);
@@ -228,6 +241,7 @@ function CalendarView({
   };
 
   const prevDate = () => {
+    if (!currentDate) return;
     let newDate;
     if (view === "day") {
       newDate = addDays(currentDate, -1);
@@ -248,17 +262,19 @@ function CalendarView({
 
   const handleViewChange = (newView: "day" | "week" | "month" | "agenda") => {
     setView(newView);
-    if (onDateChange) onDateChange(currentDate, newView);
+    if (currentDate && onDateChange) onDateChange(currentDate, newView);
   };
 
   const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 
   const weekDays = useMemo(() => {
+    if (!currentDate) return [];
     const startDate = startOfWeek(currentDate, { weekStartsOn: 0 });
     return Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   }, [currentDate]);
 
   const monthDays = useMemo(() => {
+    if (!currentDate) return [];
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -276,11 +292,13 @@ function CalendarView({
   }, [currentDate]);
 
   const dateHeader = useMemo(() => {
+    if (!currentDate) return "";
     if (view === "day") {
       return format(currentDate, "MMMM d, yyyy");
     } else if (view === "week") {
       const start = weekDays[0];
       const end = weekDays[6];
+      if (!start || !end) return "";
       return `${format(start, "MMMM d")} - ${format(end, "MMMM d, yyyy")}`;
     } else {
       return format(currentDate, "MMMM yyyy");
@@ -437,7 +455,7 @@ function CalendarView({
       )}
 
       {/* Month View */}
-      {view === "month" && (
+      {view === "month" && currentDate && (
         <CalendarMonthView
           currentDate={currentDate}
           filteredEvents={filteredEvents}
@@ -450,7 +468,7 @@ function CalendarView({
         />
       )}
 
-      {view === "agenda" && (
+      {view === "agenda" && currentDate && (
         <CalendarAgendaView
           filteredEvents={filteredEvents}
           currentDate={currentDate}
@@ -481,6 +499,8 @@ function CalendarView({
         }
         event={editingEvent || undefined}
         mode={editingEvent && editingEvent.id ? "edit" : "create"}
+        calendars={availableCalendars} // Pass calendars from mockData
+        defaultCalendarId={defaultCalendarId || availableCalendars[0]?.id} // Pass defaultCalendarId
       />
 
       {/* Delete Confirmation Dialog */}
