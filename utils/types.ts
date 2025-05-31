@@ -74,6 +74,7 @@ export interface MonthViewProps {
   searchQuery: string;
   handleDateClick: (date: Date) => void;
   handleEventClick: (event: CalendarEvent) => void;
+  handleEmptyDateClick?: (date: Date) => void;
 }
 
 export interface AgendaViewProps {

@@ -209,9 +209,35 @@ function CalendarView({
     endDate.setHours(hour + 1, 0, 0, 0);
 
     const newEvent: CalendarEvent = {
-      id: Date.now(),
+      id: `temp-${Date.now()}`, // Use string prefix to mark as temporary
       title: "",
       startDate: slotDate,
+      endDate: endDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      color: availableCalendars[0]?.color || "bg-blue-500",
+      description: "",
+      location: "",
+      attendees: [],
+      organizer: "You",
+      calendarId: defaultCalendarId || availableCalendars[0]?.id || "my-calendar",
+    };
+
+    setEditingEvent(newEvent);
+    setIsModalOpen(true);
+  };
+
+  const handleEmptyDateClick = (date: Date) => {
+    // Create a new event for the selected date, starting at 9 AM
+    const startDate = new Date(date);
+    startDate.setHours(9, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(10, 0, 0, 0);
+
+    const newEvent: CalendarEvent = {
+      id: `temp-${Date.now()}`, // Use string prefix to mark as temporary
+      title: "",
+      startDate: startDate,
       endDate: endDate,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       color: availableCalendars[0]?.color || "bg-blue-500",
@@ -426,7 +452,7 @@ function CalendarView({
         </div>
       )}
 
-      {view === "day" && (
+      {view === "day" && currentDate && (
         <CalendarDayView
           currentDate={currentDate}
           timeSlots={timeSlots}
@@ -465,6 +491,7 @@ function CalendarView({
             if (onDateChange) onDateChange(date, view);
           }}
           handleEventClick={handleEventClick}
+          handleEmptyDateClick={handleEmptyDateClick}
         />
       )}
 
@@ -498,7 +525,7 @@ function CalendarView({
           handleSaveEvent(eventData)
         }
         event={editingEvent || undefined}
-        mode={editingEvent && editingEvent.id ? "edit" : "create"}
+        mode={editingEvent && editingEvent.id && !String(editingEvent.id).startsWith("temp-") ? "edit" : "create"}
         calendars={availableCalendars} // Pass calendars from mockData
         defaultCalendarId={defaultCalendarId || availableCalendars[0]?.id} // Pass defaultCalendarId
       />

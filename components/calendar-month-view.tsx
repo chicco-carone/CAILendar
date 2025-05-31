@@ -18,6 +18,7 @@ export function CalendarMonthView({
   searchQuery,
   handleDateClick,
   handleEventClick,
+  handleEmptyDateClick,
 }: MonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -76,7 +77,15 @@ export function CalendarMonthView({
               >
                 {formatInTimezone(day, userTimezone, "d")}
               </div>
-              <div className="p-1 space-y-1 flex-1 overflow-y-auto">
+              <div 
+                className="p-1 space-y-1 flex-1 overflow-y-auto cursor-pointer"
+                onClick={(e) => {
+                  // Only create new event if clicking on empty space (not on an event)
+                  if (e.target === e.currentTarget && handleEmptyDateClick) {
+                    handleEmptyDateClick(day);
+                  }
+                }}
+              >
                 {dayEvents.map((event, i) => (
                   <div
                     key={i}
@@ -104,7 +113,10 @@ export function CalendarMonthView({
                         ? "ring-2 ring-white"
                         : ""
                     }`}
-                    onClick={() => handleEventClick(event)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent triggering the empty space click
+                      handleEventClick(event);
+                    }}
                   >
                     {!isMobile &&
                       `${formatInTimezone(
