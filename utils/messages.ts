@@ -8,4 +8,3 @@ export const loadingMessages = [
   "Reviewing your calendar...",
   "Enhancing the event Table...",
 ];
-
