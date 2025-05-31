@@ -240,3 +240,69 @@ export interface AIErrorResponse {
     details?: any;
   };
 }
+
+// AI Event Modal specific types
+export interface AIModalState {
+  prompt: string;
+  image: string | null;
+  file: File | null;
+  generatedEvents: CalendarEvent[];
+  currentEventIndex: number;
+  showEventModal: boolean;
+  showWarnings: boolean;
+  isCameraOpen: boolean;
+  showLoadingScreen: boolean;
+  currentLoadingMessage: number;
+}
+
+export interface AILoadingScreenProps {
+  isVisible: boolean;
+  currentMessageIndex: number;
+  messages: string[];
+}
+
+export interface AIInputSectionProps {
+  prompt: string;
+  onPromptChange: (prompt: string) => void;
+  onMicClick: () => void;
+  listening: boolean;
+  browserSupportsSpeechRecognition: boolean;
+}
+
+export interface FileUploadSectionProps {
+  file: File | null;
+  image: string | null;
+  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveFile: () => void;
+  onCameraClick: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+export interface CameraModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCapture: () => void;
+  cameraRef: React.RefObject<any>;
+}
+
+export interface AIAlertsSectionProps {
+  error: string | null;
+  warnings: string[];
+  conflicts: AIConflictInfo[];
+  showWarnings: boolean;
+  onClearError: () => void;
+  onHideWarnings: () => void;
+}
+
+export interface AIFormActionsProps {
+  onCancel: () => void;
+  onSubmit: () => void;
+  loading: boolean;
+  showLoadingScreen: boolean;
+  hasInput: boolean;
+}
+
+export interface AIModalHeaderProps {
+  onClose: () => void;
+  metadata: AIResponseMetadata | null;
+}
